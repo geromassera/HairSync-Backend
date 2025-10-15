@@ -17,6 +17,6 @@ namespace Domain.Interfaces
         /// <summary>
         /// Gets all users by role.
         /// </summary>
-        Task<IEnumerable<User>> GetByRoleAsync(string role);
+        Task<IEnumerable<User>> GetAlleAsync();
     }
 }
