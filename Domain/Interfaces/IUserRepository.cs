@@ -9,14 +9,9 @@ namespace Domain.Interfaces
 {
     public interface IUserRepository : IRepositoryBase<User>
     {
-        /// <summary>
-        /// Finds a user by email.
-        /// </summary>
         Task<User?> GetByEmailAsync(string email);
 
-        /// <summary>
-        /// Gets all users by role.
-        /// </summary>
-        Task<IEnumerable<User>> GetAlleAsync();
+
+        Task<IEnumerable<User>> GetAllAsync();
     }
 }

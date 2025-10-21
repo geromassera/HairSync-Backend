@@ -1,16 +1,16 @@
-﻿using Application.Models;
+﻿using Application.Interfaces;
+using Application.Models;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace Application.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
 
@@ -19,38 +19,61 @@ namespace Application.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _userRepository.ListAsync();
             return users.Select(MapToDto);
         }
 
-        public async Task<UserDto?> GetByIdAsync(int id)
+        public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
             return user is null ? null : MapToDto(user);
         }
 
-        public async Task<UserDto> CreateAsync(UserDto dto)
+        public async Task<UserDto> CreateUserAsync(RegisterDto dto)
         {
+
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
             var user = new User
             {
                 Name = dto.Name,
                 Surname = dto.Surname,
                 Email = dto.Email,
                 Phone = dto.Phone,
-                Role = Enum.TryParse<UserRole>(dto.Role, true, out var parsedRole)
-                    ? parsedRole
-                    : UserRole.Client
+                PasswordHash = hashedPassword,
+                Role = UserRole.Client
             };
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
 
-            dto.UserId = user.UserId;
-            return dto;
+            return MapToDto(user);
         }
-        public async Task<bool> DeleteAsync(int id)
+
+        public async Task<bool> UpdateUserAsync(int id, UpdateUserDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user is null) return false;
+
+            if (dto.Name is not null)
+                user.Name = dto.Name;
+
+            if (dto.Surname is not null)
+                user.Surname = dto.Surname;
+
+            if (dto.Email is not null)
+                user.Email = dto.Email;
+
+            if (dto.Password is not null)
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+            await _userRepository.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteUserAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user is null) return false;
