@@ -28,9 +28,6 @@ namespace Domain.Entities
         [Required]
         public DateTime UploadDate { get; set; } = DateTime.UtcNow;
 
-        [Required]
-        public CurriculumStatus Status { get; set; } = CurriculumStatus.Pending;
-
     }
 }
 
