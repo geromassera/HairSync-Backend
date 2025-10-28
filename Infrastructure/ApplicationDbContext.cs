@@ -17,6 +17,8 @@ namespace Infrastructure
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +52,32 @@ namespace Infrastructure
 
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
+            });
+
+
+            modelBuilder.Entity<Appointment>(entity =>
+            {
+                entity.HasKey(a => a.AppointmentId);
+
+                entity.Property(a => a.AppointmentTime)
+                    .IsRequired()
+                    .HasMaxLength(5);
+
+                entity.Property(a => a.AppointmentDate)
+                    .IsRequired();
+
+                entity.Property(a => a.CreatedAt)
+                    .IsRequired();
+
+                entity.HasOne(a => a.Customer)
+                    .WithMany()
+                    .HasForeignKey(a => a.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.Barber)
+                    .WithMany()
+                    .HasForeignKey(a => a.BarberId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
