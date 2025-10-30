@@ -1,4 +1,5 @@
 ﻿using Application.Models;
+using Domain.Enums;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,8 +12,10 @@ namespace Application.Interfaces
 
         Task<UserDto> CreateUserAsync(RegisterDto registerDto);
 
-        Task<bool> UpdateUserAsync(int id, UpdateUserDto updateUserDto);
+        Task<UserDto> UpdateUserAsync(int id, UpdateUserDto updateUserDto);
 
         Task<bool> DeleteUserAsync(int id);
+
+        Task ChangeUserRoleAsync(int userId, UserRole newRole);
     }
 }
