@@ -1,8 +1,6 @@
 ﻿using Application.Models;
-using System;
+using Domain.Enums;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces
@@ -11,8 +9,13 @@ namespace Application.Interfaces
     {
         Task<UserDto?> GetUserByIdAsync(int id);
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
-        Task<UserDto> CreateUserAsync(UserDto userDto, string password);
-        Task<bool> UpdateUserAsync(UserDto userDto);
+
+        Task<UserDto> CreateUserAsync(RegisterDto registerDto);
+
+        Task<UserDto> UpdateUserAsync(int id, UpdateUserDto updateUserDto);
+
         Task<bool> DeleteUserAsync(int id);
+
+        Task ChangeUserRoleAsync(int userId, UserRole newRole);
     }
 }

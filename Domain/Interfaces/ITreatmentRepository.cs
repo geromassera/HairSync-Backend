@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IUserRepository : IRepositoryBase<User>
+    public interface ITreatmentRepository
     {
-        Task<User?> GetByEmailAsync(string email);
+        Task<IEnumerable<Treatment>> GetAllAsync();
 
+        Task<Treatment> GetByIdAsync(int treatmentId);
 
-        Task<IEnumerable<User>> GetAllAsync();
+        Task SaveChangesAsync();
     }
 }
