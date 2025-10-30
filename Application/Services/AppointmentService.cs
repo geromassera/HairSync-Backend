@@ -1,4 +1,5 @@
-﻿using Application.Models;
+﻿using Application.Interfaces;
+using Application.Models;
 using Domain.Entities;
 using Domain.Interfaces;
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class AppointmentService
+    public class AppointmentService : IAppointmentService
     {
         private readonly IAppointmentRepository _appointmentRepository;
 
@@ -19,19 +20,35 @@ namespace Application.Services
             _appointmentRepository = appointmentRepository;
         }
 
-        public async Task<IEnumerable<AppointmentDto>> GetAllAsync()
+        public async Task<IEnumerable<AppointmentDto>> GetAllAppointmentsAsync()
         {
             var appointments = await _appointmentRepository.ListAsync();
             return appointments.Select(MapToDto);
         }
 
-        public async Task<AppointmentDto?> GetByIdAsync(int id)
+        public async Task<AppointmentDto?> GetAppointmentByIdAsync(int id)
         {
             var appointment = await _appointmentRepository.GetByIdAsync(id);
             return appointment == null ? null : MapToDto(appointment);
         }
 
-        public async Task<AppointmentDto> CreateAsync(AppointmentDto dto)
+        public async Task<IEnumerable<AppointmentDto>> GetAppointmentByUserIdAsync(int userId)
+        {
+            var appointments = await _appointmentRepository.GetByCustomerIdAsync(userId);
+
+            return appointments.Select(a => new AppointmentDto
+            {
+                AppointmentId = a.AppointmentId,
+                CustomerId = a.CustomerId,
+                BarberId = a.BarberId,
+                BranchId = a.BranchId,
+                AppointmentDate = a.AppointmentDate,
+                AppointmentTime = a.AppointmentTime,
+                CreatedAt = a.CreatedAt
+            });
+        }
+
+        public async Task<AppointmentDto> CreateAppointmentAsync(AppointmentDto dto)
         {
             var entity = MapToEntity(dto);
             var added = await _appointmentRepository.AddAsync(entity);
@@ -39,23 +56,23 @@ namespace Application.Services
             return MapToDto(added);
         }
 
-        public async Task UpdateAsync(int id, AppointmentDto dto)
+        public async Task UpdateAppointmentAsync(AppointmentDto dto)
         {
-            var existing = await _appointmentRepository.GetByIdAsync(id);
-            if (existing == null)
-                throw new KeyNotFoundException($"Appointment {id} not found.");
+            var appointment = await _appointmentRepository.GetByIdAsync(dto.AppointmentId);
 
-            existing.AppointmentDate = dto.AppointmentDate;
-            existing.AppointmentTime = dto.AppointmentTime;
-            existing.CustomerId = dto.CustomerId;
-            existing.BarberId = dto.BarberId;
-            existing.BranchId = dto.BranchId;
+            if (appointment == null)
+                throw new KeyNotFoundException("Appointment not found");
 
-            await _appointmentRepository.UpdateAsync(existing);
-            await _appointmentRepository.SaveChangesAsync();
+            appointment.CustomerId = dto.CustomerId;
+            appointment.BarberId = dto.BarberId;
+            appointment.BranchId = dto.BranchId;
+            appointment.AppointmentDate = dto.AppointmentDate;
+            appointment.AppointmentTime = dto.AppointmentTime;
+
+            await _appointmentRepository.UpdateAsync(appointment);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAppointmentAsync(int id)
         {
             var appointment = await _appointmentRepository.GetByIdAsync(id);
             if (appointment == null)

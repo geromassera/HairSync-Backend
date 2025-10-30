@@ -34,7 +34,7 @@ namespace Domain.Entities
         public DateTime AppointmentDate { get; set; }
 
         [Required]
-        [MaxLength(5)]
+        [MaxLength(8)]
         public string AppointmentTime { get; set; } = string.Empty;
 
         [Required]

@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Application.Interfaces.External;
 using Infrastructure.Services.External;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +27,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICustomAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IJokeService, JokeService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-builder.Services.AddScoped<AppointmentService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -50,7 +51,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// En Program.cs, en la sección de registro de servicios
+
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    setupAction.AddSecurityDefinition("ApiBearerAuth", new OpenApiSecurityScheme()
+    {
+        Type = SecuritySchemeType.Http, // El tipo de seguridad es HTTP
+        Scheme = "Bearer", // El esquema es "Bearer" (como en "Bearer <token>") [cite: 396]
+        Description = "Pegá acá el token JWT generado al loguearte." // [cite: 397]
+    });
+
+    setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiBearerAuth" // Debe coincidir con el Id de AddSecurityDefinition
+                }
+            }, new List<string>() }
+    });
+});
 
 const string JokeApiClientName = "JokeApiClient";
 
