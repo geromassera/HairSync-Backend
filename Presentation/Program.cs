@@ -87,7 +87,17 @@ builder.Services.AddHttpClient(JokeApiClientName, client =>
         new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .AllowAnyOrigin()    // o .WithOrigins("http://localhost:3000") si querés restringir
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -97,6 +107,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowFrontend");
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
