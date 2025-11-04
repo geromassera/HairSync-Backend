@@ -52,6 +52,27 @@ namespace Presentation.Controllers
             return Ok(user);
         }
 
+        /// <summary>
+        /// Endpoint para eliminar la cuenta del usuario autenticado.
+        /// </summary>
+        [HttpDelete("me")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteMyAccount()
+        {
+            var userId = GetCurrentUserId();
+
+            var success = await _userService.DeleteUserAsync(userId);
+
+            if (!success)
+            {
+                return NotFound(new { Message = "Usuario no encontrado." });
+            }
+
+            return NoContent();
+        }
+
 
 
         private int GetCurrentUserId()
