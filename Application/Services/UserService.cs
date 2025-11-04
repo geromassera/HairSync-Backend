@@ -43,7 +43,7 @@ namespace Application.Services
                 Email = dto.Email,
                 Phone = dto.Phone,
                 PasswordHash = hashedPassword,
-                Role = UserRole.Client
+                Role = UserRole.Customer
             };
 
             await _userRepository.AddAsync(user);

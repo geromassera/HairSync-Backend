@@ -8,7 +8,7 @@ namespace Domain.Enums
 {
     public enum UserRole
     {
-        Client = 0,
+        Customer = 0,
         Barber = 1,
         Admin = 2
     }

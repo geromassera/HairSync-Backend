@@ -91,7 +91,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("longtext")
-                        .HasDefaultValue("Client");
+                        .HasDefaultValue("Customer");
 
                     b.Property<string>("Surname")
                         .IsRequired()

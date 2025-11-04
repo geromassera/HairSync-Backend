@@ -48,7 +48,7 @@ namespace Infrastructure
 
                 entity.Property(u => u.Role)
                     .HasConversion<string>()
-                    .HasDefaultValue(UserRole.Client);
+                    .HasDefaultValue(UserRole.Customer);
 
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);

@@ -22,8 +22,6 @@ namespace Infrastructure.Repositories
         {
             return await _dbcontext.Appointments
                 .Where(a => a.CustomerId == customerId)
-                .Include(a => a.Customer)
-                .Include(a => a.Barber)
                 .ToListAsync();
         }
 
@@ -31,10 +29,17 @@ namespace Infrastructure.Repositories
         {
             return await _dbcontext.Appointments
                 .Where(a => a.BarberId == barberId)
-                .Include(a => a.Customer)
-                .Include(a => a.Barber)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Appointment>> GetAppointmentsByBarberAndDateAsync(int barberId, DateTime date)
+        {
+            return await _dbcontext.Appointments
+                .Where(a => a.BarberId == barberId && a.AppointmentDate.Date == date.Date)
+                .ToListAsync();
+        }
+
+
     }
 }
 

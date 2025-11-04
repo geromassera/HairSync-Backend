@@ -11,6 +11,7 @@ namespace Domain.Interfaces
     {
         Task<IEnumerable<Appointment>> GetByCustomerIdAsync(int customerId);
         Task<IEnumerable<Appointment>> GetByBarberIdAsync(int barberId);
+        Task<IEnumerable<Appointment>> GetAppointmentsByBarberAndDateAsync(int barberId, DateTime date);
     }
 }
 
