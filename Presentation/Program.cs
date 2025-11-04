@@ -1,19 +1,20 @@
-using Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Presentation.Middleware;
+using Application.External;
 using Application.Interfaces;
-using Infrastructure.Repositories;
-using Infrastructure.Services;
+using Application.Interfaces.External;
 using Application.Services;
 using Domain.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Application.Interfaces.External;
+using Infrastructure;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Infrastructure.Services.External;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Presentation.Middleware;
 using System.Security.Cryptography.Xml;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,9 @@ builder.Services.AddScoped<ITreatmentService, TreatmentService>();
 builder.Services.AddScoped<ITreatmentRepository, TreatmentRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 builder.Services.AddScoped<ICustomAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IJokeService, JokeService>();
 
