@@ -3,6 +3,7 @@ using Application.Models;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
+using Application.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,25 +53,37 @@ namespace Application.Services
             return MapToDto(user);
         }
 
-        public async Task<bool> UpdateUserAsync(int id, UpdateUserDto dto)
+        public async Task<UserDto> UpdateUserAsync(int id, UpdateUserDto dto)
         {
             var user = await _userRepository.GetByIdAsync(id);
-            if (user is null) return false;
-
+            if (user is null)
+            {
+                throw new NotFoundException($"Usuario con Id {id} no encontrado.");
+            }
+            
+            if (dto.Email is not null && dto.Email != user.Email)
+            {
+                var existingEmail = await _userRepository.GetByEmailAsync(dto.Email);
+                if (existingEmail is not null && existingEmail.UserId != id)
+                {
+                    throw new ForbiddenAccessException($"El email ya esta en uso por otra cuenta.");
+                }
+                user.Email = dto.Email;
+            }
             if (dto.Name is not null)
                 user.Name = dto.Name;
-
             if (dto.Surname is not null)
                 user.Surname = dto.Surname;
-
-            if (dto.Email is not null)
-                user.Email = dto.Email;
-
+            if (dto.Phone is not null)
+                user.Phone = dto.Phone;
             if (dto.Password is not null)
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             await _userRepository.SaveChangesAsync();
-            return true;
+
+            return MapToDto(user);
+
+
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -81,6 +94,30 @@ namespace Application.Services
             await _userRepository.DeleteAsync(user);
             await _userRepository.SaveChangesAsync();
             return true;
+        }
+
+        public async Task ChangeUserRoleAsync(int userId, UserRole newRole)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException($"No se encontro un usuario con el Id {userId}.");
+            }
+
+            if (user.Role == UserRole.Admin)
+            {
+                throw new ForbiddenAccessException("No esta permitido modificar el rol de un Administrador.");
+            }
+
+            if(user.Role == newRole)
+            {
+                return;
+            }
+
+            user.Role = newRole;
+
+            await _userRepository.SaveChangesAsync();
         }
 
         private static UserDto MapToDto(User user)

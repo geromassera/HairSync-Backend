@@ -17,6 +17,7 @@ namespace Infrastructure
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Treatment> Treatments { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
 
 
@@ -52,6 +53,52 @@ namespace Infrastructure
 
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Treatment>(entity =>
+            {
+                entity.HasKey(t => t.TreatmentId);
+
+                entity.Property(t => t.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+
+                entity.Property(t => t.Price)
+                .IsRequired()
+                .HasColumnType("decimal(18,2)");
+
+                entity.HasData(
+                    new Treatment
+                    {
+                        TreatmentId = 1,
+                        Name = "Corte",
+                        Price = 4500.00m
+                    },
+                    new Treatment
+                    {
+                        TreatmentId = 2,
+                        Name = "Corte y Barba",
+                        Price = 6500.00m
+                    },
+                    new Treatment
+                    {
+                        TreatmentId = 3,
+                        Name = "Peinado",
+                        Price = 3000.00m
+                    },
+                    new Treatment
+                    {
+                        TreatmentId = 4,
+                        Name = "Coloración",
+                        Price = 8000.00m
+                    },
+                    new Treatment
+                    {
+                        TreatmentId = 5,
+                        Name = "Barba",
+                        Price = 2500.00m
+                    }
+                );
             });
 
 

@@ -58,8 +58,6 @@
     /// </summary>
     public class ValidException : Exception
     {
-        // A futuro, este constructor podría aceptar un diccionario de errores
-        // para devolver todos los campos que fallaron, no solo un mensaje.
         public ValidException(string message) : base(message) { }
     }
 }
