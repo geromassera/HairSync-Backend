@@ -17,9 +17,9 @@ namespace Infrastructure
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<Treatment> Treatments { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
 
+        public DbSet<Treatment> Treatments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +54,33 @@ namespace Infrastructure
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
             });
+
+
+            modelBuilder.Entity<Appointment>(entity =>
+            {
+                entity.HasKey(a => a.AppointmentId);
+
+                entity.Property(a => a.AppointmentTime)
+                    .IsRequired()
+                    .HasMaxLength(5);
+
+                entity.Property(a => a.AppointmentDate)
+                    .IsRequired();
+
+                entity.Property(a => a.CreatedAt)
+                    .IsRequired();
+
+                entity.HasOne(a => a.Customer)
+                    .WithMany()
+                    .HasForeignKey(a => a.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.Barber)
+                    .WithMany()
+                    .HasForeignKey(a => a.BarberId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             modelBuilder.Entity<Treatment>(entity =>
             {
@@ -99,32 +126,6 @@ namespace Infrastructure
                         Price = 2500.00m
                     }
                 );
-            });
-
-
-            modelBuilder.Entity<Appointment>(entity =>
-            {
-                entity.HasKey(a => a.AppointmentId);
-
-                entity.Property(a => a.AppointmentTime)
-                    .IsRequired()
-                    .HasMaxLength(5);
-
-                entity.Property(a => a.AppointmentDate)
-                    .IsRequired();
-
-                entity.Property(a => a.CreatedAt)
-                    .IsRequired();
-
-                entity.HasOne(a => a.Customer)
-                    .WithMany()
-                    .HasForeignKey(a => a.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(a => a.Barber)
-                    .WithMany()
-                    .HasForeignKey(a => a.BarberId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

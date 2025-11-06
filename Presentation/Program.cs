@@ -78,29 +78,6 @@ builder.Services.AddSwaggerGen(setupAction =>
 });
 // En Program.cs, en la sección de registro de servicios
 
-builder.Services.AddSwaggerGen(setupAction =>
-{
-    setupAction.AddSecurityDefinition("ApiBearerAuth", new OpenApiSecurityScheme()
-    {
-        Type = SecuritySchemeType.Http, // El tipo de seguridad es HTTP
-        Scheme = "Bearer", // El esquema es "Bearer" (como en "Bearer <token>") [cite: 396]
-        Description = "Pegá acá el token JWT generado al loguearte." // [cite: 397]
-    });
-
-    setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "ApiBearerAuth" // Debe coincidir con el Id de AddSecurityDefinition
-                }
-            }, new List<string>() }
-    });
-});
-
 const string JokeApiClientName = "JokeApiClient";
 
 builder.Services.AddHttpClient(JokeApiClientName, client =>
