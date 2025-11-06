@@ -19,6 +19,8 @@ namespace Infrastructure
         public DbSet<User> Users { get; set; }
         public DbSet<Treatment> Treatments { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Branch> Branches { get; set; } = null!;
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -120,6 +122,20 @@ namespace Infrastructure
                       .HasForeignKey<Review>(r => r.AppointmentId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<Branch>(entity =>
+            {
+                entity.HasKey(b => b.BranchId);
+
+                entity.Property(b => b.Name)
+                 .IsRequired()
+                 .HasMaxLength(100);
+
+                entity.Property(b => b.Address)
+                 .IsRequired()
+                 .HasMaxLength(200);
+            });
+
         }
     }
 }
