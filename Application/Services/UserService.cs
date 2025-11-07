@@ -44,7 +44,7 @@ namespace Application.Services
                 Email = dto.Email,
                 Phone = dto.Phone,
                 PasswordHash = hashedPassword,
-                Role = UserRole.Customer
+                Role = UserRole.Client
             };
 
             await _userRepository.AddAsync(user);

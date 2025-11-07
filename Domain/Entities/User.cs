@@ -38,6 +38,6 @@ namespace Domain.Entities
         public string PasswordHash { get; set; } = string.Empty;
 
         [Required]
-        public UserRole Role { get; set; } = UserRole.Customer;
+        public UserRole Role { get; set; } = UserRole.Client;
     }
 }

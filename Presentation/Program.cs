@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Presentation.Middleware;
 using System.Security.Cryptography.Xml;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -53,8 +54,6 @@ builder.Services.AddScoped<ICustomAuthenticationService, AuthenticationService>(
 builder.Services.AddScoped<IJokeService, JokeService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -106,7 +105,6 @@ builder.Services.AddSwaggerGen(setupAction =>
             }, new List<string>() }
     });
 });
-// En Program.cs, en la sección de registro de servicios
 
 const string JokeApiClientName = "JokeApiClient";
 
@@ -119,17 +117,7 @@ builder.Services.AddHttpClient(JokeApiClientName, client =>
         new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy => policy
-            .AllowAnyOrigin()    
-            .AllowAnyMethod()
-            .AllowAnyHeader());
-});
-
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

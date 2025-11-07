@@ -57,7 +57,7 @@ namespace Application.Services
                 throw new Exception($"No existe un usuario con ID {dto.BarberId}");
 
             // 2️⃣ Verificar que los roles sean correctos
-            if (customer.Role != Domain.Enums.UserRole.Customer)
+            if (customer.Role != Domain.Enums.UserRole.Client)
                 throw new Exception($"El usuario con ID {dto.CustomerId} no tiene rol de Customer");
 
             if (barber.Role != Domain.Enums.UserRole.Barber)

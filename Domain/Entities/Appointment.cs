@@ -19,7 +19,7 @@ namespace Domain.Entities
         public int CustomerId { get; set; }
 
         [ForeignKey("CustomerId")]
-        public User Customer { get; set; } = null!;
+        public User Client { get; set; } = null!;
 
         [Required]
         public int BarberId { get; set; }

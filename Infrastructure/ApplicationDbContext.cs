@@ -51,7 +51,7 @@ namespace Infrastructure
 
                 entity.Property(u => u.Role)
                     .HasConversion<string>()
-                    .HasDefaultValue(UserRole.Customer);
+                    .HasDefaultValue(UserRole.Client);
 
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
@@ -72,7 +72,7 @@ namespace Infrastructure
                 entity.Property(a => a.CreatedAt)
                     .IsRequired();
 
-                entity.HasOne(a => a.Customer)
+                entity.HasOne(a => a.Client)
                     .WithMany()
                     .HasForeignKey(a => a.CustomerId)
                     .OnDelete(DeleteBehavior.Restrict);
