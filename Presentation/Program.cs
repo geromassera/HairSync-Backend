@@ -1,25 +1,44 @@
-using Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Presentation.Middleware;
+using Application.External;
 using Application.Interfaces;
-using Infrastructure.Repositories;
-using Infrastructure.Services;
+using Application.Interfaces.External;
 using Application.Services;
 using Domain.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Application.Interfaces.External;
+using Infrastructure;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Infrastructure.Services.External;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Presentation.Middleware;
 using System.Security.Cryptography.Xml;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+
+// Add services to the container
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins(
+                              "http://localhost:5173"
+                          )
+                          .AllowAnyHeader()
+                          .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+                      });
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
@@ -27,6 +46,9 @@ builder.Services.AddScoped<ITreatmentService, TreatmentService>();
 builder.Services.AddScoped<ITreatmentRepository, TreatmentRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 builder.Services.AddScoped<ICustomAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IJokeService, JokeService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
@@ -51,7 +73,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setupAction =>
@@ -60,7 +90,7 @@ builder.Services.AddSwaggerGen(setupAction =>
     {
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "Pegá acá el token JWT generado al loguearte."
+        Description = "PegÃ¡ acÃ¡ el token JWT generado al loguearte."
     });
 
     setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -76,7 +106,7 @@ builder.Services.AddSwaggerGen(setupAction =>
             }, new List<string>() }
     });
 });
-// En Program.cs, en la sección de registro de servicios
+// En Program.cs, en la secciÃ³n de registro de servicios
 
 const string JokeApiClientName = "JokeApiClient";
 
@@ -110,7 +140,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 

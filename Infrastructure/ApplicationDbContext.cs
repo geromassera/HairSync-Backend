@@ -20,6 +20,8 @@ namespace Infrastructure
         public DbSet<Appointment> Appointments { get; set; }
 
         public DbSet<Treatment> Treatments { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -126,6 +128,26 @@ namespace Infrastructure
                         Price = 2500.00m
                     }
                 );
+            });
+
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.HasKey(r => r.ReviewId);
+
+                entity.Property(r => r.Comment)
+                    .IsRequired()
+                    .HasMaxLength(255);
+
+                entity.Property(r => r.Rating)
+                    .IsRequired();
+
+                // 1 review por turno
+                entity.HasIndex(r => r.AppointmentId).IsUnique();
+
+                entity.HasOne(r => r.Appointment)
+                      .WithOne(a => a.Review)
+                      .HasForeignKey<Review>(r => r.AppointmentId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
