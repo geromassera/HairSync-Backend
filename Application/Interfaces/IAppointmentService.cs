@@ -12,7 +12,8 @@ namespace Application.Interfaces
     {
         Task<IEnumerable<AppointmentDto>> GetAllAppointmentsAsync();
         Task<AppointmentDto?> GetAppointmentByIdAsync(int id);
-        Task<IEnumerable<AppointmentDto>> GetAppointmentByUserIdAsync(int userId);
+        Task<IEnumerable<AppointmentDto>> GetAppointmentsForCustomerAsync(int customerId);
+        Task<IEnumerable<AppointmentDto>> GetAppointmentsForBarberAsync(int barberId);
         Task<AppointmentDto> CreateAppointmentAsync(AppointmentDto dto);
         Task UpdateAppointmentAsync(AppointmentDto dto);
         Task DeleteAppointmentAsync(int id);
