@@ -4,6 +4,7 @@ using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251106220119_CreateBranchesTable")]
+    partial class CreateBranchesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,20 +83,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("BranchId");
 
                     b.ToTable("Branches");
-
-                    b.HasData(
-                        new
-                        {
-                            BranchId = 1,
-                            Address = "Av. Pellegrini 1234",
-                            Name = "Sucursal Centro"
-                        },
-                        new
-                        {
-                            BranchId = 2,
-                            Address = "Bv. Rondeau 4567",
-                            Name = "Sucursal Norte"
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Treatment", b =>
@@ -149,43 +138,6 @@ namespace Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Domain.Entities.Appointment", b =>
-                {
-                    b.Property<int>("AppointmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("AppointmentId"));
-
-                    b.Property<DateTime>("AppointmentDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("AppointmentTime")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("varchar(5)");
-
-                    b.Property<int>("BarberId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("AppointmentId");
-
-                    b.HasIndex("BarberId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("Appointments");
-                });
-
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -193,9 +145,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("UserId"));
-
-                    b.Property<int?>("BranchId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -221,7 +170,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("longtext")
-                        .HasDefaultValue("Customer");
+                        .HasDefaultValue("Client");
 
                     b.Property<string>("Surname")
                         .IsRequired()
@@ -229,8 +178,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("varchar(25)");
 
                     b.HasKey("UserId");
-
-                    b.HasIndex("BranchId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -282,16 +229,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Barber");
 
                     b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("Domain.Entities.User", b =>
-                {
-                    b.HasOne("Domain.Entities.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Branch");
                 });
 
             modelBuilder.Entity("Review", b =>

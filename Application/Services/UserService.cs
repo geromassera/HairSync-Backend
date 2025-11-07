@@ -132,5 +132,22 @@ namespace Application.Services
                 Role = user.Role.ToString()
             };
         }
+
+        public async Task AssignBranchToBarberAsync(int userId, int branchId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user is null)
+                throw new NotFoundException($"No se encontró un usuario con el Id {userId}.");
+
+            if (user.Role != UserRole.Barber)
+                throw new ForbiddenAccessException("Solo los usuarios con rol Barber pueden tener una sucursal asignada.");
+          
+            if (branchId != 1 && branchId != 2)
+                throw new ForbiddenAccessException("La sucursal indicada no existe. Solo se permiten las sucursales 1 o 2.");
+
+            user.BranchId = branchId;
+            await _userRepository.SaveChangesAsync();
+        }
+
     }
 }

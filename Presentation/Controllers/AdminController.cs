@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;                  
 using Domain.Enums;
 
 namespace Presentation.Controllers
@@ -36,6 +36,18 @@ namespace Presentation.Controllers
             await _userService.ChangeUserRoleAsync(userId, request.NewRole);
             return NoContent();
         }
+
+        [HttpPatch("users/{userId}/assign-branch/{branchId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> AssignBranchToBarber(int userId, int branchId)
+        {
+            await _userService.AssignBranchToBarberAsync(userId, branchId);
+            return NoContent();
+        }
+
     }
 
 }
