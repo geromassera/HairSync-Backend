@@ -39,5 +39,10 @@ namespace Domain.Entities
 
         [Required]
         public UserRole Role { get; set; } = UserRole.Client;
+
+
+        public int? BranchId { get; set; }   
+        public Branch? Branch { get; set; }  
+
     }
 }

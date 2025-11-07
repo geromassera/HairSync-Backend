@@ -55,6 +55,13 @@ namespace Infrastructure
 
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
+
+                // relacion con branch
+                entity.HasOne(u => u.Branch)
+                  .WithMany()
+                  .HasForeignKey(u => u.BranchId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
             });
 
             modelBuilder.Entity<Treatment>(entity =>
@@ -128,14 +135,29 @@ namespace Infrastructure
                 entity.HasKey(b => b.BranchId);
 
                 entity.Property(b => b.Name)
-                 .IsRequired()
-                 .HasMaxLength(100);
+                      .IsRequired()
+                      .HasMaxLength(100);
 
                 entity.Property(b => b.Address)
-                 .IsRequired()
-                 .HasMaxLength(200);
-            });
+                      .IsRequired()
+                      .HasMaxLength(200);
 
+                // Las 2 sucursales fijas
+                entity.HasData(
+                    new Branch 
+                    {
+                        BranchId = 1, 
+                        Name = "Sucursal Centro", 
+                        Address = "Av. Pellegrini 1234" 
+                    },
+                    new Branch 
+                    { 
+                        BranchId = 2, 
+                        Name = "Sucursal Norte",
+                        Address = "Bv. Rondeau 4567"
+                    }
+                );
+            });
         }
     }
 }
