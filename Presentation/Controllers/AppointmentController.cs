@@ -38,7 +38,7 @@ namespace Presentation.Controllers
 
             if (role == "Client")
             {
-                appointments = await _service.GetAppointmentByUserIdAsync(userId);
+                appointments = await _service.GetAppointmentForCustomerAsync(userId);
             }
             else if (role == "Barber")
             {
@@ -76,7 +76,6 @@ namespace Presentation.Controllers
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
-            // Forzamos que el cliente logueado sea el que crea el turno
             dto.CustomerId = userId;
 
             var created = await _service.CreateAppointmentAsync(dto);
