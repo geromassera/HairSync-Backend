@@ -19,12 +19,39 @@ namespace Presentation.Controllers
             _service = service;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var appointments = await _service.GetAllAppointmentsAsync();
             return Ok(appointments);
         }
+
+        [Authorize]
+        [HttpGet("my-appointments")]
+        public async Task<IActionResult> GetMyAppointments()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var role = User.FindFirst(ClaimTypes.Role).Value;
+
+            IEnumerable<AppointmentDto> appointments;
+
+            if (role == "Client")
+            {
+                appointments = await _service.GetAppointmentByUserIdAsync(userId);
+            }
+            else if (role == "Barber")
+            {
+                appointments = await _service.GetAppointmentsForBarberAsync(userId);
+            }
+            else
+            {
+                return Forbid("Solo clientes o barberos pueden ver sus turnos.");
+            }
+
+            return Ok(appointments);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
