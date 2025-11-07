@@ -18,7 +18,6 @@ namespace Presentation.Controllers
         }
 
         [HttpGet("appointments/{appointmentId:int}/review")]
-        [Authorize] // dueño del turno o admin (validación la hace el service cuando exista IAppointmentRepository)
         public async Task<ActionResult<ReviewDto>> GetByAppointment(int appointmentId)
         {
             var (userId, isAdmin) = GetAuthContext(User);
