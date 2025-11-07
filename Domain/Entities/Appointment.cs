@@ -30,6 +30,9 @@ namespace Domain.Entities
         [Required]
         public int BranchId { get; set; }
 
+        [ForeignKey("BranchId")]
+        public Branch Branch { get; set; } = null!;
+
         [Required]
         public DateTime AppointmentDate { get; set; }
 

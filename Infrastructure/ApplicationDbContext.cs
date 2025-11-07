@@ -90,6 +90,11 @@ namespace Infrastructure
                     .WithMany()
                     .HasForeignKey(a => a.BarberId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.Branch)
+                    .WithMany()
+                    .HasForeignKey(a => a.BranchId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
 
