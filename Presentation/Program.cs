@@ -25,7 +25,6 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-// Add services to the container
 
 
 builder.Services.AddCors(options =>
@@ -81,8 +80,6 @@ builder.Services.AddControllers()
     });
 
 
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setupAction =>
 {
@@ -101,7 +98,7 @@ builder.Services.AddSwaggerGen(setupAction =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "ApiBearerAuth" // Debe coincidir con el Id de AddSecurityDefinition
+                    Id = "ApiBearerAuth" 
                 }
             }, new List<string>() }
     });
@@ -120,7 +117,6 @@ builder.Services.AddHttpClient(JokeApiClientName, client =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -58,7 +58,6 @@ namespace Infrastructure
                 entity.Property(u => u.Phone)
                     .HasMaxLength(20);
 
-                // relacion con branch
                 entity.HasOne(u => u.Branch)
                   .WithMany()
                   .HasForeignKey(u => u.BranchId)
@@ -70,52 +69,41 @@ namespace Infrastructure
             modelBuilder.Entity<Appointment>(entity =>
             {
                 entity.HasKey(a => a.Id);
-                // Convertir el Enum a String en la DB (más legible)
                 entity.Property(e => e.Status)
                       .IsRequired()
                       .HasConversion<string>()
                       .HasMaxLength(20);
 
 
-                // Hacer 'AppointmentDateTime' requerida (aunque ya lo es por [Required])
                 entity.Property(a => a.AppointmentDateTime)
                     .IsRequired();
 
-                // Configurar la relación con Cliente (User)
                 entity.HasOne(a => a.Client)
-                      .WithMany() // Asumimos que User no tiene una colección "ClientAppointments"
+                      .WithMany() 
                       .HasForeignKey(a => a.ClientId)
-                      .OnDelete(DeleteBehavior.Restrict); // Evitar borrado en cascada
+                      .OnDelete(DeleteBehavior.Restrict);
 
-                // Configurar la relación con Barbero (User)
                 entity.HasOne(a => a.Barber)
-                      .WithMany() // Asumimos que User no tiene "BarberAppointments"
+                      .WithMany() 
                       .HasForeignKey(a => a.BarberId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Branch
                 entity.HasOne(a => a.Branch)
-                      .WithMany() // Asumimos que Branch no tiene "Appointments"
+                      .WithMany() 
                       .HasForeignKey(a => a.BranchId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Relación con Treatment
                 entity.HasOne(a => a.Treatment)
-                      .WithMany() // Asumimos que Treatment no tiene "Appointments"
+                      .WithMany() 
                       .HasForeignKey(a => a.TreatmentId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Índice para buscar rápido los turnos de un Cliente
                 entity.HasIndex(a => a.ClientId)
                     .HasDatabaseName("IX_Appointment_ClientId");
 
-                // Índice para buscar rápido los turnos de una Sucursal
                 entity.HasIndex(a => a.BranchId)
                     .HasDatabaseName("IX_Appointment_BranchId");
 
-                // Índice COMPUESTO: La joya de la corona.
-                // Lo usaremos para chequear disponibilidad (BarberId + Fecha)
-                // y para buscar la agenda del barbero.
                 entity.HasIndex(a => new { a.BarberId, a.AppointmentDateTime })
                     .HasDatabaseName("IX_Appointment_BarberId_DateTime");
             });
@@ -168,11 +156,10 @@ namespace Infrastructure
             });
 
             modelBuilder.Entity<Review>()
-            .HasOne(r => r.User)          // Una Review tiene un User
-            .WithMany(u => u.Reviews)    // Un User tiene muchas Reviews
-            .HasForeignKey(r => r.UserId) // La clave foránea es UserId
-            .OnDelete(DeleteBehavior.Cascade); // Opcional: si borrás un usuario, se borran sus reviews. 
-                                               // Podés cambiarlo a .Restrict si preferís que no se pueda borrar un user con reviews.
+            .HasOne(r => r.User)
+            .WithMany(u => u.Reviews)   
+            .HasForeignKey(r => r.UserId) 
+            .OnDelete(DeleteBehavior.Cascade); 
       
             modelBuilder.Entity<Branch>(entity =>
             {
@@ -186,7 +173,6 @@ namespace Infrastructure
                       .IsRequired()
                       .HasMaxLength(200);
 
-                // Las 2 sucursales fijas
                 entity.HasData(
                     new Branch 
                     {

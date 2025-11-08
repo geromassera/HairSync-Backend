@@ -26,12 +26,8 @@ namespace Infrastructure.Repositories
             await _context.Reviews.AddAsync(review);
             await _context.SaveChangesAsync();
         }
-
-        // --- IMPLEMENTACIÓN DEL NUEVO MÉTODO ---
         public async Task<bool> HasUserReviewedAsync(int userId)
         {
-            // AnyAsync es súper eficiente. Deja de buscar 
-            // en cuanto encuentra una coincidencia.
             return await _context.Reviews.AnyAsync(r => r.UserId == userId);
         }
     }
