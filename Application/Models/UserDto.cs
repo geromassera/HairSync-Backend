@@ -32,7 +32,7 @@ namespace Application.Models
 
         [Required(ErrorMessage = "El email es requerido.")]
         [EmailAddress(ErrorMessage = "El formato del email no es válido.")]
-        [MaxLength(20)]
+        [MaxLength(60)]
         public string Email { get; set; } = string.Empty;
 
         [Required]
@@ -81,7 +81,7 @@ namespace Application.Models
     )]
         public string? Password { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(60)]
         public string? Phone { get; set; }
     }
 
