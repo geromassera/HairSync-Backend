@@ -42,7 +42,8 @@ namespace Domain.Entities
 
 
         public int? BranchId { get; set; }   
-        public Branch? Branch { get; set; }  
+        public Branch? Branch { get; set; }
+        public ICollection<Review> Reviews { get; set; }
 
     }
 }

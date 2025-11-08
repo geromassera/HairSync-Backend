@@ -4,9 +4,9 @@ namespace Application.External
 {
     public interface IReviewService
     {
-        Task<ReviewDto?> GetByAppointmentAsync(int appointmentId, int requesterUserId, bool isAdmin);
-        Task<ReviewDto> CreateAsync(int appointmentId, int requesterUserId, CreateReviewDto dto);
-        Task UpdateAsync(int reviewId, int requesterUserId, UpdateReviewDto dto, bool isAdmin);
-        Task DeleteAsync(int reviewId, int requesterUserId, bool isAdmin);
+        Task<IEnumerable<ReviewDto>> GetAllReviewsAsync();
+
+        // Pasamos el DTO y el ID del usuario que la está creando
+        Task CreateReviewAsync(CreateReviewDto dto, int userId);
     }
 }

@@ -13,118 +13,206 @@ namespace Application.Services
 {
     public class AppointmentService : IAppointmentService
     {
-        private readonly IAppointmentRepository _appointmentRepository;
-        private readonly IUserRepository _userRepository;
+        // ... (dependencias y constantes de horario sin cambios) ...
+        private readonly IAppointmentRepository _appointmentRepo;
+        private readonly IUserRepository _userRepo;
 
-        public AppointmentService(IAppointmentRepository appointmentRepository, IUserRepository userRepository)
+        // --- DEFINICIÓN DE DURACIÓN ESTÁNDAR ---
+        private const int StandardAppointmentDurationMinutes = 60;
+
+        // --- NUEVO: HORARIOS DE LA BARBERÍA ---
+        private static readonly TimeSpan OpeningTime = new TimeSpan(10, 0, 0); // 10:00 AM
+        private static readonly TimeSpan ClosingTime = new TimeSpan(19, 0, 0); // 7:00 PM (19:00)
+        // El último turno es a las 18:00 (19:00 - 60 min)
+        private static readonly TimeSpan LastAppointmentSlot = ClosingTime.Subtract(TimeSpan.FromMinutes(StandardAppointmentDurationMinutes));
+
+
+        public AppointmentService(
+            // ... (código del constructor sin cambios) ...
+            IAppointmentRepository appointmentRepo,
+            IUserRepository userRepo)
         {
-            _appointmentRepository = appointmentRepository;
-            _userRepository = userRepository;
+            _appointmentRepo = appointmentRepo;
+            _userRepo = userRepo;
         }
 
-        public async Task<IEnumerable<AppointmentDto>> GetAllAppointmentsAsync()
+        public async Task<AppointmentViewDto> CreateAppointmentAsync(AppointmentCreateDto createDto, int clientId)
         {
-            var appointments = await _appointmentRepository.ListAsync();
-            return appointments.Select(MapToDto);
-        }
+            // ... (Validaciones de horario, fecha futura, barbero-sucursal y solapamiento sin cambios) ...
+            DateTime appointmentStartTime = createDto.AppointmentDateTime;
 
-        public async Task<AppointmentDto?> GetAppointmentByIdAsync(int id)
-        {
-            var appointment = await _appointmentRepository.GetByIdAsync(id);
-            return appointment == null ? null : MapToDto(appointment);
-        }
+            // --- NUEVA VALIDACIÓN: HORARIO COMERCIAL ---
 
-        public async Task<IEnumerable<AppointmentDto>> GetAppointmentByUserIdAsync(int userId)
-        {
-            var customerAppointments = await _appointmentRepository.GetByCustomerIdAsync(userId);
-            var barberAppointments = await _appointmentRepository.GetByBarberIdAsync(userId);
+            // 1. Validar Día (Lunes a Sábado)
+            if (appointmentStartTime.DayOfWeek == DayOfWeek.Sunday)
+            // ... (código de validación sin cambios) ...
+            {
+                throw new Exception("La barbería está cerrada los domingos.");
+            }
 
-            var allAppointments = customerAppointments.Concat(barberAppointments);
+            // 2. Validar Hora de Apertura
+            if (appointmentStartTime.TimeOfDay < OpeningTime)
+            // ... (código de validación sin cambios) ...
+            {
+                throw new Exception($"El horario de apertura es a las {OpeningTime:hh\\:mm} AM.");
+            }
 
-            return allAppointments.Select(MapToDto);
-        }
+            // 3. Validar Hora de Cierre (considerando la duración)
+            // Usamos TimeOfDay para comparar solo la hora.
+            if (appointmentStartTime.TimeOfDay > LastAppointmentSlot)
+            // ... (código de validación sin cambios) ...
+            {
+                // Si el turno empieza DESPUÉS del último slot posible
+                // Ej: Si el último slot es 18:00, y pide 18:01, falla.
+                throw new Exception($"El turno debe finalizar antes de las {ClosingTime:hh\\:mm}. El último turno disponible es a las {LastAppointmentSlot:hh\\:mm}.");
+            }
+
+            // --- FIN NUEVA VALIDACIÓN ---
 
 
-        public async Task<AppointmentDto> CreateAppointmentAsync(AppointmentDto dto)
-        {
-            var customer = await _userRepository.GetByIdAsync(dto.CustomerId);
-            var barber = await _userRepository.GetByIdAsync(dto.BarberId);
+            // --- Validación de Fecha Futura ---
+            if (appointmentStartTime <= DateTime.Now) // Asumimos que la fecha del DTO es local
+                                                      // ... (código de validación sin cambios) ...
+            {
+                throw new Exception("La fecha del turno debe ser en el futuro.");
+            }
 
-            if (customer == null)
-                throw new Exception($"No existe un usuario con ID {dto.CustomerId}");
-
+            // --- Validación 1: Barbero vs Sucursal ---
+            var barber = await _userRepo.GetByIdAsync(createDto.BarberId);
             if (barber == null)
-                throw new Exception($"No existe un usuario con ID {dto.BarberId}");
+            // ... (código de validación sin cambios) ...
+            {
+                throw new Exception("Barbero no encontrado.");
+            }
+            if (barber.BranchId != createDto.BranchId)
+            // ... (código de validación sin cambios) ...
+            {
+                throw new Exception("El barbero no trabaja en la sucursal seleccionada.");
+            }
 
-            // 2️⃣ Verificar que los roles sean correctos
-            if (customer.Role != Domain.Enums.UserRole.Client)
-                throw new Exception($"El usuario con ID {dto.CustomerId} no tiene rol de Customer");
+            // --- Validación 2: Solapamiento de Turno ---
+            var isAvailable = await _appointmentRepo.CheckBarberAvailabilityAsync(
+                // ... (código de validación sin cambios) ...
+                createDto.BarberId,
+                appointmentStartTime,
+                StandardAppointmentDurationMinutes);
 
-            if (barber.Role != Domain.Enums.UserRole.Barber)
-                throw new Exception($"El usuario con ID {dto.BarberId} no tiene rol de Barber");
+            if (!isAvailable)
+            // ... (código de validación sin cambios) ...
+            {
+                throw new Exception($"El barbero no está disponible. Ya tiene un turno que se solapa con el rango de {StandardAppointmentDurationMinutes} minutos.");
+            }
 
-            // 3️⃣ Verificar que no haya conflicto de horario (opcional)
-            var existing = await _appointmentRepository.GetAppointmentsByBarberAndDateAsync(dto.BarberId, dto.AppointmentDate);
-            if (existing.Any(a => a.AppointmentTime == dto.AppointmentTime))
-                throw new Exception("El barbero ya tiene un turno asignado en ese horario.");
-
-            // 4️⃣ Crear la cita
+            // --- Creación de la Entidad ---
             var appointment = new Appointment
             {
-                CustomerId = dto.CustomerId,
-                BarberId = dto.BarberId,
-                BranchId = dto.BranchId,
-                AppointmentDate = dto.AppointmentDate,
-                AppointmentTime = dto.AppointmentTime,
-                CreatedAt = DateTime.UtcNow
+                AppointmentDateTime = appointmentStartTime,
+                BarberId = createDto.BarberId,
+                BranchId = createDto.BranchId,
+                TreatmentId = createDto.TreatmentId,
+                ClientId = clientId,
+                Status = AppointmentStatus.Confirmed // <-- CAMBIO: Ahora se Confirma al crear
             };
 
-            await _appointmentRepository.AddAsync(appointment);
-            await _appointmentRepository.SaveChangesAsync();
+            await _appointmentRepo.AddAsync(appointment);
+            await _appointmentRepo.SaveChangesAsync();
 
-            dto.AppointmentId = appointment.AppointmentId;
-            dto.CreatedAt = appointment.CreatedAt;
-
-            return dto;
+            var newAppointment = await _appointmentRepo.GetByIdWithDetailsAsync(appointment.Id);
+            return MapToViewDto(newAppointment);
         }
 
 
-        public async Task UpdateAppointmentAsync(AppointmentDto dto)
+        public async Task CancelAppointmentAsync(int appointmentId, int userId)
         {
-            var appointment = await _appointmentRepository.GetByIdAsync(dto.AppointmentId);
+            var appointment = await _appointmentRepo.GetByIdWithDetailsAsync(appointmentId);
 
-            if (appointment == null)
-                throw new KeyNotFoundException("Appointment not found");
+            if (appointment == null) { throw new Exception("Turno no encontrado."); }
 
-            appointment.CustomerId = dto.CustomerId;
-            appointment.BarberId = dto.BarberId;
-            appointment.BranchId = dto.BranchId;
-            appointment.AppointmentDate = dto.AppointmentDate;
-            appointment.AppointmentTime = dto.AppointmentTime;
+            // Verificación de permiso
+            if (appointment.ClientId != userId && appointment.BarberId != userId)
+            { throw new Exception("No autorizado para cancelar este turno."); }
 
-            await _appointmentRepository.UpdateAsync(appointment);
+            // --- NUEVA LÓGICA DE CANCELACIÓN ---
+
+            // 1. Validar si ya está cancelado
+            if (appointment.Status == AppointmentStatus.Cancelled)
+            {
+                throw new Exception("El turno ya está cancelado.");
+            }
+
+            // 2. Validar si ya está "Completado" (si su fecha ya pasó)
+            DateTime appointmentEndTime = appointment.AppointmentDateTime.AddMinutes(StandardAppointmentDurationMinutes);
+            // Usamos DateTime.UtcNow si las fechas se guardan en UTC
+            if (appointmentEndTime < DateTime.UtcNow)
+            {
+                throw new Exception("No se puede cancelar un turno que ya ha pasado (está completado).");
+            }
+
+            // Si llegó acá, es 'Confirmed' y en el futuro, así que se puede cancelar.
+            appointment.Status = AppointmentStatus.Cancelled;
+            _appointmentRepo.Update(appointment);
+            await _appointmentRepo.SaveChangesAsync();
         }
 
-        public async Task DeleteAppointmentAsync(int id)
+        public async Task<IEnumerable<AppointmentViewDto>> GetMyAppointmentsAsync(int clientId)
         {
-            var appointment = await _appointmentRepository.GetByIdAsync(id);
-            if (appointment == null)
-                throw new KeyNotFoundException($"Appointment {id} not found.");
-
-            await _appointmentRepository.DeleteAsync(appointment);
-            await _appointmentRepository.SaveChangesAsync();
+            // Usamos el método renombrado del repositorio
+            var appointments = await _appointmentRepo.GetFutureAppointmentsByClientIdAsync(clientId);
+            return appointments.Select(MapToViewDto);
         }
 
-        private static AppointmentDto MapToDto(Appointment entity) => new AppointmentDto
+        public async Task<IEnumerable<AppointmentViewDto>> GetBarberScheduleAsync(int barberId, DateTime date)
+        // ... (código sin cambios) ...
         {
-            AppointmentId = entity.AppointmentId,
-            CustomerId = entity.CustomerId,
-            BarberId = entity.BarberId,
-            BranchId = entity.BranchId,
-            AppointmentDate = entity.AppointmentDate,
-            AppointmentTime = entity.AppointmentTime,
-            CreatedAt = entity.CreatedAt
-        };
+            var appointments = await _appointmentRepo.GetByBarberIdAndDateAsync(barberId, date);
+            return appointments.Select(MapToViewDto);
+        }
+
+        public async Task<IEnumerable<AppointmentViewDto>> GetAllAppointmentsHistoryAsync()
+        // ... (código sin cambios) ...
+        {
+            var appointments = await _appointmentRepo.GetAllWithDetailsAsync();
+            return appointments.Select(MapToViewDto);
+        }
+
+        // --- MÉTODO CLAVE: Mapeo con Estado Calculado ---
+        private AppointmentViewDto MapToViewDto(Appointment appointment)
+        {
+            if (appointment == null) return null;
+
+            // --- LÓGICA DE ESTADO CALCULADO ---
+            string status;
+            // Calculamos la hora de fin (asumiendo UTC si la DB está en UTC)
+            DateTime appointmentEndTime = appointment.AppointmentDateTime.AddMinutes(StandardAppointmentDurationMinutes);
+
+            if (appointment.Status == AppointmentStatus.Cancelled)
+            {
+                status = AppointmentStatus.Cancelled.ToString(); // "Cancelled"
+            }
+            // Si la hora de fin es anterior a AHORA, está completado
+            else if (appointmentEndTime < DateTime.UtcNow)
+            {
+                status = "Completed"; // Estado calculado
+            }
+            else // Si no está cancelado y no pasó, está confirmado
+            {
+                status = AppointmentStatus.Confirmed.ToString(); // "Confirmed"
+            }
+            // --- FIN LÓGICA ---
+
+            return new AppointmentViewDto
+            {
+                Id = appointment.Id,
+                AppointmentDateTime = appointment.AppointmentDateTime,
+                Status = status, // <-- Usamos la variable 'status' calculada
+
+                ClientName = $"{appointment.Client?.Name} {appointment.Client?.Surname}".Trim(),
+                BarberName = $"{appointment.Barber?.Name} {appointment.Barber?.Surname}".Trim(),
+                BranchName = appointment.Branch?.Name ?? "N/D",
+                TreatmentName = appointment.Treatment?.Name ?? "N/D",
+                TreatmentPrice = appointment.Treatment?.Price ?? 0
+            };
+        }
     }
 }
 

@@ -69,32 +69,55 @@ namespace Infrastructure
 
             modelBuilder.Entity<Appointment>(entity =>
             {
-                entity.HasKey(a => a.AppointmentId);
+                entity.HasKey(a => a.Id);
+                // Convertir el Enum a String en la DB (más legible)
+                entity.Property(e => e.Status)
+                      .IsRequired()
+                      .HasConversion<string>()
+                      .HasMaxLength(20);
 
-                entity.Property(a => a.AppointmentTime)
-                    .IsRequired()
-                    .HasMaxLength(5);
 
-                entity.Property(a => a.AppointmentDate)
+                // Hacer 'AppointmentDateTime' requerida (aunque ya lo es por [Required])
+                entity.Property(a => a.AppointmentDateTime)
                     .IsRequired();
 
-                entity.Property(a => a.CreatedAt)
-                    .IsRequired();
-
+                // Configurar la relación con Cliente (User)
                 entity.HasOne(a => a.Client)
-                    .WithMany()
-                    .HasForeignKey(a => a.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                      .WithMany() // Asumimos que User no tiene una colección "ClientAppointments"
+                      .HasForeignKey(a => a.ClientId)
+                      .OnDelete(DeleteBehavior.Restrict); // Evitar borrado en cascada
 
+                // Configurar la relación con Barbero (User)
                 entity.HasOne(a => a.Barber)
-                    .WithMany()
-                    .HasForeignKey(a => a.BarberId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                      .WithMany() // Asumimos que User no tiene "BarberAppointments"
+                      .HasForeignKey(a => a.BarberId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
+                // Relación con Branch
                 entity.HasOne(a => a.Branch)
-                    .WithMany()
-                    .HasForeignKey(a => a.BranchId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                      .WithMany() // Asumimos que Branch no tiene "Appointments"
+                      .HasForeignKey(a => a.BranchId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Relación con Treatment
+                entity.HasOne(a => a.Treatment)
+                      .WithMany() // Asumimos que Treatment no tiene "Appointments"
+                      .HasForeignKey(a => a.TreatmentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Índice para buscar rápido los turnos de un Cliente
+                entity.HasIndex(a => a.ClientId)
+                    .HasDatabaseName("IX_Appointment_ClientId");
+
+                // Índice para buscar rápido los turnos de una Sucursal
+                entity.HasIndex(a => a.BranchId)
+                    .HasDatabaseName("IX_Appointment_BranchId");
+
+                // Índice COMPUESTO: La joya de la corona.
+                // Lo usaremos para chequear disponibilidad (BarberId + Fecha)
+                // y para buscar la agenda del barbero.
+                entity.HasIndex(a => new { a.BarberId, a.AppointmentDateTime })
+                    .HasDatabaseName("IX_Appointment_BarberId_DateTime");
             });
 
 
@@ -144,26 +167,13 @@ namespace Infrastructure
                 );
             });
 
-            modelBuilder.Entity<Review>(entity =>
-            {
-                entity.HasKey(r => r.ReviewId);
-
-                entity.Property(r => r.Comment)
-                    .IsRequired()
-                    .HasMaxLength(255);
-
-                entity.Property(r => r.Rating)
-                    .IsRequired();
-
-                // 1 review por turno
-                entity.HasIndex(r => r.AppointmentId).IsUnique();
-
-                entity.HasOne(r => r.Appointment)
-                      .WithOne(a => a.Review)
-                      .HasForeignKey<Review>(r => r.AppointmentId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
-
+            modelBuilder.Entity<Review>()
+            .HasOne(r => r.User)          // Una Review tiene un User
+            .WithMany(u => u.Reviews)    // Un User tiene muchas Reviews
+            .HasForeignKey(r => r.UserId) // La clave foránea es UserId
+            .OnDelete(DeleteBehavior.Cascade); // Opcional: si borrás un usuario, se borran sus reviews. 
+                                               // Podés cambiarlo a .Restrict si preferís que no se pueda borrar un user con reviews.
+      
             modelBuilder.Entity<Branch>(entity =>
             {
                 entity.HasKey(b => b.BranchId);

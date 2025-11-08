@@ -7,11 +7,26 @@ using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IAppointmentRepository : IRepositoryBase<Appointment>
+    public interface IAppointmentRepository
     {
-        Task<IEnumerable<Appointment>> GetByCustomerIdAsync(int customerId);
-        Task<IEnumerable<Appointment>> GetByBarberIdAsync(int barberId);
-        Task<IEnumerable<Appointment>> GetAppointmentsByBarberAndDateAsync(int barberId, DateTime date);
+        Task<Appointment> GetByIdWithDetailsAsync(int id);
+        Task<IEnumerable<Appointment>> GetAllWithDetailsAsync();
+
+        // Renombramos GetPendingByClientIdAsync para que sea más claro
+        Task<IEnumerable<Appointment>> GetFutureAppointmentsByClientIdAsync(int clientId);
+
+        Task<IEnumerable<Appointment>> GetByBarberIdAndDateAsync(int barberId, DateTime date);
+
+        /// <summary>
+        /// Verifica si un barbero tiene disponibilidad en un rango de tiempo.
+        /// Chequea que no haya turnos (Confirmed) que se solapen,
+        /// asumiendo una duración estándar.
+        /// </summary>
+        Task<bool> CheckBarberAvailabilityAsync(int barberId, DateTime requestedStartTime, int durationInMinutes);
+
+        Task AddAsync(Appointment appointment);
+        void Update(Appointment appointment);
+        Task<bool> SaveChangesAsync();
     }
 }
 

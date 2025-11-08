@@ -8,41 +8,56 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    [Table("Appointments")]
+    // ... (código de la clase Appointment sin cambios) ...
     public class Appointment
     {
+        // ... (propiedades Id, DateTime, Status, Keys, etc.) ...
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AppointmentId { get; set; }
+        public int Id { get; set; }
 
         [Required]
-        public int CustomerId { get; set; }
+        public DateTime AppointmentDateTime { get; set; }
 
-        [ForeignKey("CustomerId")]
-        public User Client { get; set; } = null!;
+        [Required]
+        public AppointmentStatus Status { get; set; }
+
+        // --- Claves Foráneas ---
+
+        [Required]
+        public int ClientId { get; set; }
 
         [Required]
         public int BarberId { get; set; }
 
-        [ForeignKey("BarberId")]
-        public User Barber { get; set; } = null!;
-
         [Required]
         public int BranchId { get; set; }
 
-        [ForeignKey("BranchId")]
-        public Branch Branch { get; set; } = null!;
-
         [Required]
-        public DateTime AppointmentDate { get; set; }
+        public int TreatmentId { get; set; }
 
-        [Required]
-        [MaxLength(8)]
-        public string AppointmentTime { get; set; } = string.Empty;
+        // --- Propiedades de Navegación ---
+        // Asumiendo que tenés una entidad User para Cliente y Barbero
+        // y entidades Branch y Treatment.
 
-        [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        [ForeignKey("ClientId")]
+        public virtual User Client { get; set; }
 
-        public Review? Review { get; set; }
+        [ForeignKey("BarberId")]
+        public virtual User Barber { get; set; }
+
+        public virtual Branch Branch { get; set; }
+
+        public virtual Treatment Treatment { get; set; }
+    }
+
+    /// <summary>
+    /// Define los posibles estados de un turno.
+    /// Simplificado según la nueva lógica.
+    /// </summary>
+    public enum AppointmentStatus
+    {
+        Confirmed,  // Creado y confirmado si pasa validaciones
+        Cancelled   // Cancelado (por cliente o barbero)
+        // 'Completed' ahora se calculará, no se almacenará.
     }
 }

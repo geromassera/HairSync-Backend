@@ -8,110 +8,120 @@ using System.Security.Claims;
 namespace Presentation.Controllers
 {
     [ApiController]
-    [Route("api/appointments")]
-    [Authorize]
+    [Route("api/[controller]")]
+    [Authorize] // Todos los endpoints requieren autenticación
     public class AppointmentsController : ControllerBase
     {
-        private readonly IAppointmentService _service;
+        private readonly IAppointmentService _appointmentService;
 
-        public AppointmentsController(IAppointmentService service)
+        public AppointmentsController(IAppointmentService appointmentService)
         {
-            _service = service;
+            _appointmentService = appointmentService;
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        /// <summary>
+        /// Endpoint para que un Cliente cree un turno.
+        /// </summary>
+        [HttpPost]
+        [Authorize(Roles = "Client")] // Solo Clientes
+        public async Task<IActionResult> CreateAppointment([FromBody] AppointmentCreateDto createDto)
         {
-            var appointments = await _service.GetAllAppointmentsAsync();
-            return Ok(appointments);
+            try
+            {
+                var clientId = GetCurrentUserId(); // Helper para obtener ID del token JWT
+                var newAppointment = await _appointmentService.CreateAppointmentAsync(createDto, clientId);
+
+                // Retornamos el DTO de vista (AppointmentViewDto)
+                return CreatedAtAction(nameof(GetAppointmentById), new { id = newAppointment.Id }, newAppointment);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        [Authorize]
+        /// <summary>
+        /// Endpoint para cancelar un turno (Cliente o Barbero).
+        /// </summary>
+        [HttpPut("{id}/cancel")]
+        [Authorize(Roles = "Client,Barber")] // Clientes o Barberos
+        public async Task<IActionResult> CancelAppointment(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _appointmentService.CancelAppointmentAsync(id, userId);
+                return Ok(new { message = "Turno cancelado exitosamente." });
+            }
+            catch (Exception ex)
+            {
+                // Manejar excepciones específicas (ej. Unauthorized, NotFound)
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // --- VISTAS ---
+
+        /// <summary>
+        /// Endpoint para que el Cliente vea sus turnos pendientes.
+        /// </summary>
         [HttpGet("my-appointments")]
+        [Authorize(Roles = "Client")]
         public async Task<IActionResult> GetMyAppointments()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            var role = User.FindFirst(ClaimTypes.Role).Value;
-
-            IEnumerable<AppointmentDto> appointments;
-
-            if (role == "Client")
-            {
-                appointments = await _service.GetAppointmentForCustomerAsync(userId);
-            }
-            else if (role == "Barber")
-            {
-                appointments = await _service.GetAppointmentsForBarberAsync(userId);
-            }
-            else
-            {
-                return Forbid("Solo clientes o barberos pueden ver sus turnos.");
-            }
-
+            var clientId = GetCurrentUserId();
+            var appointments = await _appointmentService.GetMyAppointmentsAsync(clientId);
             return Ok(appointments);
         }
 
+        /// <summary>
+        /// Endpoint para que el Barbero vea su agenda del día.
+        /// </summary>
+        [HttpGet("barber/schedule")]
+        [Authorize(Roles = "Barber")]
+        public async Task<IActionResult> GetBarberSchedule([FromQuery] DateTime? date)
+        {
+            var barberId = GetCurrentUserId();
+            var scheduleDate = date ?? DateTime.Today; // Si no provee fecha, usa hoy
 
+            var appointments = await _appointmentService.GetBarberScheduleAsync(barberId, scheduleDate);
+            return Ok(appointments);
+        }
+
+        /// <summary>
+        /// Endpoint para que el Admin vea TODO el historial.
+        /// </summary>
+        [HttpGet("history")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllAppointmentsHistory()
+        {
+            var appointments = await _appointmentService.GetAllAppointmentsHistoryAsync();
+            return Ok(appointments);
+        }
+
+        // (Helper para obtener un turno por ID, usado por CreatedAtAction)
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        [Authorize] // General
+        public async Task<IActionResult> GetAppointmentById(int id)
         {
-            var appointment = await _service.GetAppointmentByIdAsync(id);
-            if (appointment == null)
-                return NotFound(new { message = $"Appointment with id {id} not found" });
-
-            return Ok(appointment);
-        }
-
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetByUserId(int userId)
-        {
-            var appointments = await _service.GetAppointmentByUserIdAsync(userId);
-            return Ok(appointments);
-        }
-
-        [Authorize(Roles = "Client")]
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] AppointmentDto dto)
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-
-            dto.CustomerId = userId;
-
-            var created = await _service.CreateAppointmentAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.AppointmentId }, created);
+            // Este endpoint debería usar el servicio para obtener un DTO
+            // y verificar permisos (ej. que solo el cliente, barbero o admin puedan verlo)
+            // Por simplicidad, lo dejamos pendiente.
+            return Ok();
         }
 
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] AppointmentDto dto)
+        // --- Helper ---
+        private int GetCurrentUserId()
         {
-            if (dto == null || id != dto.AppointmentId)
-                return BadRequest("Appointment data mismatch");
-
-            try
+            // Simulación de obtención de ID desde el Token JWT
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out int userId))
             {
-                await _service.UpdateAppointmentAsync(dto);
-                return NoContent();
+                return userId;
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                await _service.DeleteAppointmentAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            // Esto no debería pasar si [Authorize] está activo
+            throw new UnauthorizedAccessException("Usuario no autenticado.");
         }
     }
 }

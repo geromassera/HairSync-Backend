@@ -2,87 +2,56 @@
 using Application.Models;
 using Domain.Entities;
 using Domain.Interfaces;
+using Application.Exceptions;
 
 namespace Application.Services
 {
     public class ReviewService : IReviewService
     {
         private readonly IReviewRepository _reviewRepository;
-        // private readonly IAppointmentRepository _appointmentRepository; // falta: descomentar
 
-        public ReviewService(IReviewRepository reviewRepository /*, IAppointmentRepository appointmentRepository */)
+        public ReviewService(IReviewRepository reviewRepository)
         {
             _reviewRepository = reviewRepository;
-            // _appointmentRepository = appointmentRepository; falta: descomentar
         }
 
-        public async Task<ReviewDto?> GetByAppointmentAsync(int appointmentId, int requesterUserId, bool isAdmin)
+        // (GetAllReviewsAsync() sigue igual que antes)
+        public async Task<IEnumerable<ReviewDto>> GetAllReviewsAsync()
         {
-            // falta: agregar validacion de turno cuando exista IAppointmentRepository
-            var review = await _reviewRepository.GetByAppointmentIdAsync(appointmentId);
-            if (review == null)
-                return null;
-
-            return new ReviewDto
+            var reviews = await _reviewRepository.GetAllWithUserAsync();
+            // ... (el mapeo manual sigue igual)
+            return reviews.Select(r => new ReviewDto
             {
-                ReviewId = review.ReviewId,
-                AppointmentId = review.AppointmentId,
-                Rating = review.Rating,
-                Comment = review.Comment
-            };
+                Rating = r.Rating,
+                Text = r.Text,
+                CreatedAt = r.CreatedAt,
+                ClientName = r.User != null ? $"{r.User.Name} {r.User.Surname}" : "Usuario Anónimo"
+            });
         }
 
-        public async Task<ReviewDto> CreateAsync(int appointmentId, int requesterUserId, CreateReviewDto dto)
+        public async Task CreateReviewAsync(CreateReviewDto dto, int userId)
         {
-            // falta: validar turno y dueño del turno cuando exista IAppointmentRepository
-            var existingReview = await _reviewRepository.GetByAppointmentIdAsync(appointmentId);
-            if (existingReview != null)
-                throw new InvalidOperationException("Ya existe una reseña para este turno.");
+            // --- VALIDACIÓN DE LA REGLA 1 ---
+            // Verificamos si el usuario ya dejó una reseña
+            bool alreadyReviewed = await _reviewRepository.HasUserReviewedAsync(userId);
 
+            if (alreadyReviewed)
+            {
+                // Si ya lo hizo, lanzamos la excepción que el controlador atrapará
+                throw new AlreadyReviewedException("Este usuario ya ha enviado una reseña.");
+            }
+
+            // Si llegamos acá, es porque no había reseñado.
+            // El resto del código sigue igual.
             var review = new Review
             {
-                AppointmentId = appointmentId,
                 Rating = dto.Rating,
-                Comment = dto.Comment
+                Text = dto.Text,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _reviewRepository.AddAsync(review);
-            await _reviewRepository.SaveChangesAsync();
-
-            return new ReviewDto
-            {
-                ReviewId = review.ReviewId,
-                AppointmentId = review.AppointmentId,
-                Rating = review.Rating,
-                Comment = review.Comment
-            };
-        }
-
-        public async Task UpdateAsync(int reviewId, int requesterUserId, UpdateReviewDto dto, bool isAdmin)
-        {
-            var review = await _reviewRepository.GetByIdAsync(reviewId)
-                ?? throw new KeyNotFoundException("La reseña no existe.");
-
-            // falta: validar que el usuario sea dueño del turno o admin
-
-            if (dto.Rating.HasValue)
-                review.Rating = dto.Rating.Value;
-            if (!string.IsNullOrWhiteSpace(dto.Comment))
-                review.Comment = dto.Comment;
-
-            _reviewRepository.Update(review);
-            await _reviewRepository.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(int reviewId, int requesterUserId, bool isAdmin)
-        {
-            var review = await _reviewRepository.GetByIdAsync(reviewId)
-                ?? throw new KeyNotFoundException("La reseña no existe.");
-
-            // falta: validar que el usuario sea dueño del turno o admin
-
-            _reviewRepository.Remove(review);
-            await _reviewRepository.SaveChangesAsync();
         }
     }
 }
