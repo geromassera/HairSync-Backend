@@ -27,7 +27,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "client")]
+        [Authorize(Roles = "Client")]
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto reviewDto)
         {
             try
