@@ -69,8 +69,9 @@ namespace Presentation.Middleware
 
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
-                    message = "Ocurrio un error inesperado.";
+                    message = $"Error inesperado: {exception.Message}";
                     break;
+
             }
 
             context.Response.ContentType = "application/json";

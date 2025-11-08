@@ -4,11 +4,11 @@ namespace Domain.Interfaces
 {
     public interface IReviewRepository
     {
-        Task<Review?> GetByIdAsync(int id);
-        Task<Review?> GetByAppointmentIdAsync(int appointmentId);
+        // Trae todas las reviews, incluyendo los datos del User asociado
+        Task<IEnumerable<Review>> GetAllWithUserAsync();
+
+        // Agrega una nueva review
         Task AddAsync(Review review);
-        void Update(Review review);
-        void Remove(Review review);
-        Task SaveChangesAsync();
+        Task<bool> HasUserReviewedAsync(int userId);
     }
 }

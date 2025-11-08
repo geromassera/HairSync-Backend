@@ -1,4 +1,5 @@
-﻿using Application.External;
+﻿using Application.Exceptions;
+using Application.External;
 using Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,57 +8,57 @@ using System.Security.Claims;
 namespace Presentation.Controllers
 {
     [ApiController]
-    [Route("api")]
+    [Route("api/[controller]")]
     public class ReviewsController : ControllerBase
     {
-        private readonly IReviewService _service;
+        private readonly IReviewService _reviewService;
 
-        public ReviewsController(IReviewService service)
+        public ReviewsController(IReviewService reviewService)
         {
-            _service = service;
+            _reviewService = reviewService;
         }
 
-        [HttpGet("appointments/{appointmentId:int}/review")]
-        public async Task<ActionResult<ReviewDto>> GetByAppointment(int appointmentId)
+        // (GET sigue igual, AllowAnonymous)
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllReviews()
         {
-            var (userId, isAdmin) = GetAuthContext(User);
-            var review = await _service.GetByAppointmentAsync(appointmentId, userId, isAdmin);
-            return review is null ? NotFound() : Ok(review);
+            var reviews = await _reviewService.GetAllReviewsAsync();
+            return Ok(reviews);
         }
 
-        [HttpPost("appointments/{appointmentId:int}/review")]
-        [Authorize(Roles = "Client,Admin")]
-        public async Task<ActionResult<ReviewDto>> Create(int appointmentId, [FromBody] CreateReviewDto dto)
+        // --- ENDPOINT ACTUALIZADO ---
+        [HttpPost]
+        // REGLA 2: Ahora solo pueden entrar usuarios AUTORIZADOS
+        // Y que además tengan el ROL "client".
+        // Esto asume que tu JWT/Cookie tiene un claim de "role" con el valor "client".
+        [Authorize(Roles = "client")]
+        public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto reviewDto)
         {
-            var (userId, _) = GetAuthContext(User);
-            var created = await _service.CreateAsync(appointmentId, userId, dto);
-            return CreatedAtAction(nameof(GetByAppointment), new { appointmentId }, created);
-        }
+            try
+            {
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                {
+                    return Unauthorized("No se pudo identificar al usuario.");
+                }
 
-        [HttpPut("reviews/{id:int}")]
-        [Authorize]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateReviewDto dto)
-        {
-            var (userId, isAdmin) = GetAuthContext(User);
-            await _service.UpdateAsync(id, userId, dto, isAdmin);
-            return NoContent();
-        }
+                // Llamamos al servicio (que ahora tiene la validación de "una sola vez")
+                await _reviewService.CreateReviewAsync(reviewDto, userId);
 
-        [HttpDelete("reviews/{id:int}")]
-        [Authorize]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var (userId, isAdmin) = GetAuthContext(User);
-            await _service.DeleteAsync(id, userId, isAdmin);
-            return NoContent();
-        }
-
-        private static (int userId, bool isAdmin) GetAuthContext(ClaimsPrincipal user)
-        {
-            var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-            var id = int.TryParse(idStr, out var parsed) ? parsed : 0;
-            var isAdmin = user.IsInRole("Admin");
-            return (id, isAdmin);
+                return StatusCode(201, "Review creada exitosamente.");
+            }
+            catch (AlreadyReviewedException ex)
+            {
+                // REGLA 1: Manejamos la excepción del servicio.
+                // HTTP 409 Conflict es ideal para "no se puede crear porque ya existe".
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Un catch-all por si algo más falla
+                return StatusCode(500, new { message = "Ocurrió un error inesperado.", details = ex.Message });
+            }
         }
     }
 }

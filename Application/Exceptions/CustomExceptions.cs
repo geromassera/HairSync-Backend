@@ -60,4 +60,11 @@
     {
         public ValidException(string message) : base(message) { }
     }
+
+    public class AlreadyReviewedException : Exception
+    {
+        public AlreadyReviewedException(string message) : base(message)
+        {
+        }
+    }
 }

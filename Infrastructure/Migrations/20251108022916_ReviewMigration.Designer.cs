@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251107164243_SeedBranches")]
-    partial class SeedBranches
+    [Migration("20251108022916_ReviewMigration")]
+    partial class ReviewMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,19 +27,14 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Appointment", b =>
                 {
-                    b.Property<int>("AppointmentId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("AppointmentId"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AppointmentDate")
+                    b.Property<DateTime>("AppointmentDateTime")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("AppointmentTime")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("varchar(5)");
 
                     b.Property<int>("BarberId")
                         .HasColumnType("int");
@@ -47,17 +42,29 @@ namespace Infrastructure.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CustomerId")
+                    b.Property<int>("ClientId")
                         .HasColumnType("int");
 
-                    b.HasKey("AppointmentId");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
-                    b.HasIndex("BarberId");
+                    b.Property<int>("TreatmentId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("CustomerId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("IX_Appointment_BranchId");
+
+                    b.HasIndex("ClientId")
+                        .HasDatabaseName("IX_Appointment_ClientId");
+
+                    b.HasIndex("TreatmentId");
+
+                    b.HasIndex("BarberId", "AppointmentDateTime")
+                        .HasDatabaseName("IX_Appointment_BarberId_DateTime");
 
                     b.ToTable("Appointments");
                 });
@@ -206,27 +213,28 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Review", b =>
                 {
-                    b.Property<int>("ReviewId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ReviewId"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AppointmentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
-                    b.HasKey("ReviewId");
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
-                    b.HasIndex("AppointmentId")
-                        .IsUnique();
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
                 });
@@ -236,18 +244,34 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.User", "Barber")
                         .WithMany()
                         .HasForeignKey("BarberId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.User", "Customer")
+                    b.HasOne("Domain.Entities.Branch", "Branch")
                         .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Treatment", "Treatment")
+                        .WithMany()
+                        .HasForeignKey("TreatmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Barber");
 
-                    b.Navigation("Customer");
+                    b.Navigation("Branch");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Treatment");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -262,18 +286,18 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Review", b =>
                 {
-                    b.HasOne("Domain.Entities.Appointment", "Appointment")
-                        .WithOne("Review")
-                        .HasForeignKey("Review", "AppointmentId")
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany("Reviews")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Appointment");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Appointment", b =>
+            modelBuilder.Entity("Domain.Entities.User", b =>
                 {
-                    b.Navigation("Review");
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }
