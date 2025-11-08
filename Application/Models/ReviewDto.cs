@@ -8,7 +8,6 @@ namespace Application.Models
         public string Text { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        // Acá va el nombre formateado del cliente
         public string ClientName { get; set; }
     }
 

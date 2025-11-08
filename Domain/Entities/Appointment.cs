@@ -8,10 +8,8 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    // ... (código de la clase Appointment sin cambios) ...
     public class Appointment
     {
-        // ... (propiedades Id, DateTime, Status, Keys, etc.) ...
         [Key]
         public int Id { get; set; }
 
@@ -20,8 +18,6 @@ namespace Domain.Entities
 
         [Required]
         public AppointmentStatus Status { get; set; }
-
-        // --- Claves Foráneas ---
 
         [Required]
         public int ClientId { get; set; }
@@ -35,9 +31,7 @@ namespace Domain.Entities
         [Required]
         public int TreatmentId { get; set; }
 
-        // --- Propiedades de Navegación ---
-        // Asumiendo que tenés una entidad User para Cliente y Barbero
-        // y entidades Branch y Treatment.
+
 
         [ForeignKey("ClientId")]
         public virtual User Client { get; set; }
@@ -50,14 +44,9 @@ namespace Domain.Entities
         public virtual Treatment Treatment { get; set; }
     }
 
-    /// <summary>
-    /// Define los posibles estados de un turno.
-    /// Simplificado según la nueva lógica.
-    /// </summary>
     public enum AppointmentStatus
     {
-        Confirmed,  // Creado y confirmado si pasa validaciones
-        Cancelled   // Cancelado (por cliente o barbero)
-        // 'Completed' ahora se calculará, no se almacenará.
+        Confirmed,  
+        Cancelled  
     }
 }

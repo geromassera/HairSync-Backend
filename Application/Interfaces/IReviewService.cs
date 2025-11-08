@@ -6,7 +6,6 @@ namespace Application.External
     {
         Task<IEnumerable<ReviewDto>> GetAllReviewsAsync();
 
-        // Pasamos el DTO y el ID del usuario que la está creando
         Task CreateReviewAsync(CreateReviewDto dto, int userId);
     }
 }
