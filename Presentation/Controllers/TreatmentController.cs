@@ -18,7 +18,7 @@ namespace Presentation.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllTreatments()
         {
             var treatments = await _treatmentService.GetAllTreatmentsAsync();
