@@ -16,6 +16,8 @@ namespace Application.Interfaces
 
         Task<bool> DeleteUserAsync(int id);
 
+        Task<IEnumerable<UserDto>> GetAllBarbersAsync();
+
         Task ChangeUserRoleAsync(int userId, UserRole newRole);
 
         Task AssignBranchToBarberAsync(int userId, int branchId);

@@ -36,6 +36,16 @@ namespace Application.Services
         {
 
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            var existingEmail = await _userRepository.GetByEmailAsync(dto.Email);
+            var existingPhone = await _userRepository.GetByPhoneAsync(dto.Phone);
+            if (existingEmail is not null)
+            {
+                throw new ConflictException("El email ya está registrado.");
+            }
+            if (existingPhone is not null)
+            {
+                throw new ConflictException("El número de teléfono ya está registrado.");
+            }
 
             var user = new User
             {
@@ -66,16 +76,24 @@ namespace Application.Services
                 var existingEmail = await _userRepository.GetByEmailAsync(dto.Email);
                 if (existingEmail is not null && existingEmail.UserId != id)
                 {
-                    throw new ForbiddenAccessException($"El email ya esta en uso por otra cuenta.");
+                    throw new ConflictException($"El email ya esta en uso por otra cuenta.");
                 }
                 user.Email = dto.Email;
+            }
+
+            if (dto.Phone is not null && dto.Phone != user.Phone)
+            {
+                var existingPhone = await _userRepository.GetByPhoneAsync(dto.Phone);
+                if (existingPhone is not null && existingPhone.UserId != id)
+                {
+                    throw new ConflictException("El teléfono ya esta en uso por otra cuenta.");
+                }
+                user.Phone = dto.Phone;
             }
             if (dto.Name is not null)
                 user.Name = dto.Name;
             if (dto.Surname is not null)
                 user.Surname = dto.Surname;
-            if (dto.Phone is not null)
-                user.Phone = dto.Phone;
             if (dto.Password is not null)
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
@@ -94,6 +112,12 @@ namespace Application.Services
             await _userRepository.DeleteAsync(user);
             await _userRepository.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<UserDto>> GetAllBarbersAsync()
+        {
+            var barbers = await _userRepository.GetByRoleAsync(UserRole.Barber);
+            return barbers.Select(MapToDto);
         }
 
         public async Task ChangeUserRoleAsync(int userId, UserRole newRole)
