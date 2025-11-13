@@ -19,9 +19,6 @@ namespace Presentation.Controllers
             _appointmentService = appointmentService;
         }
 
-        /// <summary>
-        /// Endpoint para que un Cliente cree un turno.
-        /// </summary>
         [HttpPost]
         [Authorize(Roles = "Client")] 
         public async Task<IActionResult> CreateAppointment([FromBody] AppointmentCreateDto createDto)
@@ -39,9 +36,7 @@ namespace Presentation.Controllers
             }
         }
 
-        /// <summary>
-        /// Endpoint para cancelar un turno (Cliente o Barbero).
-        /// </summary>
+
         [HttpPut("{id}/cancel")]
         [Authorize(Roles = "Client,Barber")]
         public async Task<IActionResult> CancelAppointment(int id)
@@ -58,9 +53,6 @@ namespace Presentation.Controllers
             }
         }
 
-        /// <summary>
-        /// Endpoint para que el Cliente vea sus turnos pendientes.
-        /// </summary>
         [HttpGet("my-appointments")]
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> GetMyAppointments()
@@ -70,9 +62,7 @@ namespace Presentation.Controllers
             return Ok(appointments);
         }
 
-        /// <summary>
-        /// Endpoint para que el Barbero vea su agenda del día.
-        /// </summary>
+
         [HttpGet("barber/schedule")]
         [Authorize(Roles = "Barber")]
         public async Task<IActionResult> GetBarberSchedule([FromQuery] DateTime? date)
@@ -84,9 +74,7 @@ namespace Presentation.Controllers
             return Ok(appointments);
         }
 
-        /// <summary>
-        /// Endpoint para que el Admin vea TODO el historial.
-        /// </summary>
+
         [HttpGet("history")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllAppointmentsHistory()
@@ -96,7 +84,7 @@ namespace Presentation.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize] // General
+        [Authorize] 
         public async Task<IActionResult> GetAppointmentById(int id)
         {
             return Ok();
@@ -112,6 +100,23 @@ namespace Presentation.Controllers
             }
             throw new UnauthorizedAccessException("Usuario no autenticado.");
         }
+
+
+        [HttpGet("availability")]
+        [Authorize(Roles = "Client,Barber")]
+        public async Task<IActionResult> GetAvailability([FromQuery] int branchId, [FromQuery] DateOnly date, [FromQuery] int? barberId)
+        {
+            try
+            {
+                var availableHours = await _appointmentService.GetAvailableHoursAsync(branchId, date, barberId);
+                return Ok(availableHours);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }
 

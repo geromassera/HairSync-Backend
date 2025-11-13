@@ -57,7 +57,10 @@ namespace Infrastructure
                     .HasDefaultValue(UserRole.Client);
 
                 entity.Property(u => u.Phone)
-                    .HasMaxLength(20);
+                    .HasMaxLength(10);
+
+                entity.HasIndex(u => u.Phone)
+                    .IsUnique();
 
                 entity.HasOne(u => u.Branch)
                   .WithMany()

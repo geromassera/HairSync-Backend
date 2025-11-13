@@ -173,6 +173,62 @@ namespace Application.Services
                 TreatmentPrice = appointment.Treatment?.Price ?? 0
             };
         }
+
+        public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null)
+        {
+            // 1) Sin domingos
+            if (date.ToDateTime(TimeOnly.MinValue).DayOfWeek == DayOfWeek.Sunday)
+                return new List<string>();
+
+            // 2) Config: 1 turno por hora, de 10 a 19 (último inicio 18:00)
+            const int SlotMinutes = 60;
+            var opening = new TimeSpan(10, 0, 0);
+            var closing = new TimeSpan(19, 0, 0);
+            var lastStart = closing - TimeSpan.FromMinutes(SlotMinutes);
+
+            // 3) Barberos de la sucursal (y filtrar si mandan uno)
+            var barbers = await _userRepo.GetBarbersByBranchAsync(branchId);
+            if (barberId.HasValue)
+                barbers = barbers.Where(b => b.UserId == barberId.Value).ToList(); // 👈 usa tu PK real (UserId)
+
+            if (barbers.Count == 0)
+                return new List<string>();
+
+            // 4) Generar horas: 10:00, 11:00, ..., 18:00 (hora local)
+            var startLocal = date.ToDateTime(TimeOnly.FromTimeSpan(opening));
+            var lastStartLocal = date.ToDateTime(TimeOnly.FromTimeSpan(lastStart));
+            var availableHours = new List<string>(); // devolveremos ISO-8601 en UTC
+
+            for (var t = startLocal; t <= lastStartLocal; t = t.AddHours(1))
+            {
+                var startUtc = DateTime.SpecifyKind(t, DateTimeKind.Local).ToUniversalTime();
+
+                bool slotFree;
+                if (barberId.HasValue)
+                {
+                    // chequear solo ese barbero
+                    slotFree = await _appointmentRepo.CheckBarberAvailabilityAsync(barberId.Value, startUtc, SlotMinutes);
+                }
+                else
+                {
+                    // chequear si ALGÚN barbero de la sucursal está libre en ese horario
+                    slotFree = false;
+                    foreach (var b in barbers)
+                    {
+                        if (await _appointmentRepo.CheckBarberAvailabilityAsync(b.UserId, startUtc, SlotMinutes)) // 👈 usa tu PK real (UserId)
+                        {
+                            slotFree = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (slotFree)
+                    availableHours.Add(startUtc.ToString("o")); // ISO-8601 en UTC (ej: 2025-11-14T13:00:00.0000000Z)
+            }
+
+            return availableHours;
+        }
     }
 }
 

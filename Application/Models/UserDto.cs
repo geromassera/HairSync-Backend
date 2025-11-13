@@ -37,7 +37,7 @@ namespace Application.Models
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(20)]
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "El teléfono debe contener exactamente 10 dígitos.")]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es requerida.")]
@@ -72,7 +72,7 @@ namespace Application.Models
 
 
         [EmailAddress]
-        [MaxLength(20)]
+        [MaxLength(60)]
         public string? Email { get; set; }
 
 
@@ -82,7 +82,7 @@ namespace Application.Models
     )]
         public string? Password { get; set; }
 
-        [MaxLength(60)]
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "El teléfono debe contener exactamente 10 dígitos.")]
         public string? Phone { get; set; }
     }
 
