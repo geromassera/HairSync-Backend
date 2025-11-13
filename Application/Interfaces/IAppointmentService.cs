@@ -19,6 +19,7 @@ namespace Application.Interfaces
         Task<IEnumerable<AppointmentViewDto>> GetBarberScheduleAsync(int barberId, DateTime date);
 
         Task<IEnumerable<AppointmentViewDto>> GetAllAppointmentsHistoryAsync();
+        Task<AppointmentViewDto> GetAppointmentByIdAsync(int appointmentId);
 
         Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null);
     }

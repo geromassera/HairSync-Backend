@@ -81,8 +81,6 @@ namespace Presentation.Controllers
             return Ok(barbers);
         }
 
-
-
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);

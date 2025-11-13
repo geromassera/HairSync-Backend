@@ -87,6 +87,7 @@ namespace Presentation.Controllers
         [Authorize] 
         public async Task<IActionResult> GetAppointmentById(int id)
         {
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
             return Ok();
         }
 

@@ -174,6 +174,16 @@ namespace Application.Services
             };
         }
 
+        public async Task<AppointmentViewDto> GetAppointmentByIdAsync(int appointmentId)
+        {
+            var appointment = await _appointmentRepo.GetByIdWithDetailsAsync(appointmentId);
+            if (appointment == null)
+            {
+                throw new Exception("Turno no encontrado.");
+            }
+            return MapToViewDto(appointment);
+        }
+
         public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null)
         {
             // 1) Sin domingos
