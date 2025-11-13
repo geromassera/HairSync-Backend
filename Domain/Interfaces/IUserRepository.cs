@@ -16,5 +16,8 @@ namespace Domain.Interfaces
         Task<IEnumerable<User>> GetAllAsync();
 
         Task<User?> GetByPhoneAsync(string phone);
+        Task<IEnumerable<User>> GetAllAsync();
+
+        Task<List<User>> GetBarbersByBranchAsync(int branchId);
     }
 }
