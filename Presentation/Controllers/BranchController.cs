@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Presentation.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/branches")]
     public class BranchController : ControllerBase
     {
         private readonly IBranchService _branchService;

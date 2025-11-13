@@ -167,6 +167,7 @@ namespace Application.Services
                 Status = status,
 
                 ClientName = $"{appointment.Client?.Name} {appointment.Client?.Surname}".Trim(),
+                ClientPhone = appointment.Client?.Phone ?? "N/D",
                 BarberName = $"{appointment.Barber?.Name} {appointment.Barber?.Surname}".Trim(),
                 BranchName = appointment.Branch?.Name ?? "N/D",
                 TreatmentName = appointment.Treatment?.Name ?? "N/D",

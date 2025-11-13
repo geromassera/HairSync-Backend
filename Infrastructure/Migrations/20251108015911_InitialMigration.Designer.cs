@@ -245,7 +245,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Branch", "Branch")
+                    b.HasOne("Domain.Entities.Branch", "Branches")
                         .WithMany()
                         .HasForeignKey("BranchId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -265,7 +265,7 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Barber");
 
-                    b.Navigation("Branch");
+                    b.Navigation("Branches");
 
                     b.Navigation("Client");
 
@@ -274,12 +274,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
-                    b.HasOne("Domain.Entities.Branch", "Branch")
+                    b.HasOne("Domain.Entities.Branch", "Branches")
                         .WithMany()
                         .HasForeignKey("BranchId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Branch");
+                    b.Navigation("Branches");
                 });
 
             modelBuilder.Entity("Review", b =>
