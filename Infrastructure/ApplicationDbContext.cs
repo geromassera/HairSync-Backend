@@ -102,6 +102,10 @@ namespace Infrastructure
                       .HasForeignKey(a => a.TreatmentId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+                entity.Property(a => a.Price)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
                 entity.HasIndex(a => a.ClientId)
                     .HasDatabaseName("IX_Appointment_ClientId");
 

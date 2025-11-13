@@ -15,21 +15,25 @@ namespace Application.Services
     {
         private readonly IAppointmentRepository _appointmentRepo;
         private readonly IUserRepository _userRepo;
+        private readonly ITreatmentRepository _treatmentRepo;
+
 
         private const int StandardAppointmentDurationMinutes = 60;
 
-        private static readonly TimeSpan OpeningTime = new TimeSpan(10, 0, 0); // 10:00 AM
-        private static readonly TimeSpan ClosingTime = new TimeSpan(19, 0, 0); // 7:00 PM (19:00)
+        private static readonly TimeSpan OpeningTime = new TimeSpan(12, 0, 0); // 10:00 AM
+        private static readonly TimeSpan ClosingTime = new TimeSpan(22, 0, 0); // 7:00 PM (19:00)
         // El último turno es a las 18:00 (19:00 - 60 min)
         private static readonly TimeSpan LastAppointmentSlot = ClosingTime.Subtract(TimeSpan.FromMinutes(StandardAppointmentDurationMinutes));
 
 
         public AppointmentService(
             IAppointmentRepository appointmentRepo,
-            IUserRepository userRepo)
+            IUserRepository userRepo,
+            ITreatmentRepository treatmentRepo)
         {
             _appointmentRepo = appointmentRepo;
             _userRepo = userRepo;
+            _treatmentRepo = treatmentRepo;
         }
 
         public async Task<AppointmentViewDto> CreateAppointmentAsync(AppointmentCreateDto createDto, int clientId)
@@ -79,6 +83,12 @@ namespace Application.Services
                 throw new Exception($"El barbero no está disponible. Ya tiene un turno que se solapa con el rango de {StandardAppointmentDurationMinutes} minutos.");
             }
 
+            var treatment = await _treatmentRepo.GetByIdAsync(createDto.TreatmentId);
+            if (treatment == null)
+            {
+                throw new Exception("Tratamiento no encontrado.");
+            }
+
             var appointment = new Appointment
             {
                 AppointmentDateTime = appointmentStartTime,
@@ -86,7 +96,8 @@ namespace Application.Services
                 BranchId = createDto.BranchId,
                 TreatmentId = createDto.TreatmentId,
                 ClientId = clientId,
-                Status = AppointmentStatus.Confirmed
+                Status = AppointmentStatus.Confirmed,
+                Price = treatment.Price
             };
 
             await _appointmentRepo.AddAsync(appointment);
@@ -171,10 +182,11 @@ namespace Application.Services
                 BarberName = $"{appointment.Barber?.Name} {appointment.Barber?.Surname}".Trim(),
                 BranchName = appointment.Branch?.Name ?? "N/D",
                 TreatmentName = appointment.Treatment?.Name ?? "N/D",
-                TreatmentPrice = appointment.Treatment?.Price ?? 0
+                Price = appointment.Price
             };
         }
 
+        public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId)
         public async Task<AppointmentViewDto> GetAppointmentByIdAsync(int appointmentId)
         {
             var appointment = await _appointmentRepo.GetByIdWithDetailsAsync(appointmentId);
@@ -187,59 +199,64 @@ namespace Application.Services
 
         public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null)
         {
-            // 1) Sin domingos
             if (date.ToDateTime(TimeOnly.MinValue).DayOfWeek == DayOfWeek.Sunday)
                 return new List<string>();
 
-            // 2) Config: 1 turno por hora, de 10 a 19 (último inicio 18:00)
-            const int SlotMinutes = 60;
-            var opening = new TimeSpan(10, 0, 0);
-            var closing = new TimeSpan(19, 0, 0);
-            var lastStart = closing - TimeSpan.FromMinutes(SlotMinutes);
-
-            // 3) Barberos de la sucursal (y filtrar si mandan uno)
             var barbers = await _userRepo.GetBarbersByBranchAsync(branchId);
+
             if (barberId.HasValue)
-                barbers = barbers.Where(b => b.UserId == barberId.Value).ToList(); // 👈 usa tu PK real (UserId)
+                barbers = barbers.Where(b => b.UserId == barberId.Value).ToList();
 
             if (barbers.Count == 0)
                 return new List<string>();
 
-            // 4) Generar horas: 10:00, 11:00, ..., 18:00 (hora local)
-            var startLocal = date.ToDateTime(TimeOnly.FromTimeSpan(opening));
-            var lastStartLocal = date.ToDateTime(TimeOnly.FromTimeSpan(lastStart));
-            var availableHours = new List<string>(); // devolveremos ISO-8601 en UTC
+            var opening = new TimeSpan(10, 0, 0);
+            var closing = new TimeSpan(19, 0, 0);
 
-            for (var t = startLocal; t <= lastStartLocal; t = t.AddHours(1))
+            var result = new List<string>();
+
+            for (var t = opening; t < closing; t += TimeSpan.FromHours(1))
             {
-                var startUtc = DateTime.SpecifyKind(t, DateTimeKind.Local).ToUniversalTime();
+                var local = date.ToDateTime(TimeOnly.FromTimeSpan(t));
+                var utc = DateTime.SpecifyKind(local, DateTimeKind.Local).ToUniversalTime();
 
-                bool slotFree;
+                bool free = false;
+
                 if (barberId.HasValue)
                 {
-                    // chequear solo ese barbero
-                    slotFree = await _appointmentRepo.CheckBarberAvailabilityAsync(barberId.Value, startUtc, SlotMinutes);
+                    free = await _appointmentRepo.CheckBarberAvailabilityAsync(barberId.Value, utc, 60);
                 }
                 else
                 {
-                    // chequear si ALGÚN barbero de la sucursal está libre en ese horario
-                    slotFree = false;
                     foreach (var b in barbers)
                     {
-                        if (await _appointmentRepo.CheckBarberAvailabilityAsync(b.UserId, startUtc, SlotMinutes)) // 👈 usa tu PK real (UserId)
+                        if (await _appointmentRepo.CheckBarberAvailabilityAsync(b.UserId, utc, 60))
                         {
-                            slotFree = true;
+                            free = true;
                             break;
                         }
                     }
                 }
 
-                if (slotFree)
-                    availableHours.Add(startUtc.ToString("o")); // ISO-8601 en UTC (ej: 2025-11-14T13:00:00.0000000Z)
+                if (free)
+                    result.Add(utc.ToString("o"));
             }
 
-            return availableHours;
+            return result;
         }
+
+
+        public async Task<List<BarberDto>> GetBarbersByBranchAsync(int branchId)
+        {
+            var barbers = await _userRepo.GetBarbersByBranchAsync(branchId);
+
+            return barbers.Select(b => new BarberDto
+            {
+                Id = b.UserId,
+                Name = $"{b.Name} {b.Surname}".Trim()
+            }).ToList();
+        }
+
     }
 }
 
