@@ -31,6 +31,9 @@ namespace Domain.Entities
         [Required]
         public int TreatmentId { get; set; }
 
+        [Required]
+        public decimal Price { get; set; }
+
 
 
         [ForeignKey("ClientId")]

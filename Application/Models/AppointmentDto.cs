@@ -34,7 +34,7 @@ namespace Application.Models
 
         public string BranchName { get; set; }
         public string TreatmentName { get; set; }
-        public decimal TreatmentPrice { get; set; }
+        public decimal Price { get; set; }
     }
 }
 

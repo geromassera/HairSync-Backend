@@ -15,6 +15,8 @@ namespace Application.Services
     {
         private readonly IAppointmentRepository _appointmentRepo;
         private readonly IUserRepository _userRepo;
+        private readonly ITreatmentRepository _treatmentRepo;
+
 
         private const int StandardAppointmentDurationMinutes = 60;
 
@@ -26,10 +28,12 @@ namespace Application.Services
 
         public AppointmentService(
             IAppointmentRepository appointmentRepo,
-            IUserRepository userRepo)
+            IUserRepository userRepo,
+            ITreatmentRepository treatmentRepo)
         {
             _appointmentRepo = appointmentRepo;
             _userRepo = userRepo;
+            _treatmentRepo = treatmentRepo;
         }
 
         public async Task<AppointmentViewDto> CreateAppointmentAsync(AppointmentCreateDto createDto, int clientId)
@@ -79,6 +83,12 @@ namespace Application.Services
                 throw new Exception($"El barbero no está disponible. Ya tiene un turno que se solapa con el rango de {StandardAppointmentDurationMinutes} minutos.");
             }
 
+            var treatment = await _treatmentRepo.GetByIdAsync(createDto.TreatmentId);
+            if (treatment == null)
+            {
+                throw new Exception("Tratamiento no encontrado.");
+            }
+
             var appointment = new Appointment
             {
                 AppointmentDateTime = appointmentStartTime,
@@ -86,7 +96,8 @@ namespace Application.Services
                 BranchId = createDto.BranchId,
                 TreatmentId = createDto.TreatmentId,
                 ClientId = clientId,
-                Status = AppointmentStatus.Confirmed
+                Status = AppointmentStatus.Confirmed,
+                Price = treatment.Price
             };
 
             await _appointmentRepo.AddAsync(appointment);
@@ -170,7 +181,7 @@ namespace Application.Services
                 BarberName = $"{appointment.Barber?.Name} {appointment.Barber?.Surname}".Trim(),
                 BranchName = appointment.Branch?.Name ?? "N/D",
                 TreatmentName = appointment.Treatment?.Name ?? "N/D",
-                TreatmentPrice = appointment.Treatment?.Price ?? 0
+                Price = appointment.Price
             };
         }
 
