@@ -33,15 +33,16 @@ namespace Domain.Entities
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
 
-        // Metadatos del Archivo
         [Required]
         [MaxLength(255)]
-        public string FileName { get; set; } = string.Empty; // Nombre original subido
+        public string FileName { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(500)]
-        public string FilePath { get; set; } = string.Empty; // Ruta segura de almacenamiento
+        public string FilePath { get; set; } = string.Empty; 
 
         public DateTime UploadDate { get; set; }
+
+        public bool IsReviewed { get; set; } = false;
     }
 }

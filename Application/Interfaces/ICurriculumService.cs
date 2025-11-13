@@ -10,5 +10,7 @@ namespace Application.Interfaces
     public interface ICurriculumService
     {
         Task<CurriculumSuccessDto> ProcessCurriculumApplicationAsync(CurriculumDto applicationDto);
+        Task<(Stream FileStream, string FileName, string ContentType)> GetCvFileAsync(int curriculumId);
+        Task<IEnumerable<CurriculumListDto>> GetAllCurriculumsAsync();
     }
 }

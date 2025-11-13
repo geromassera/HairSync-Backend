@@ -6,5 +6,6 @@ namespace Domain.Interfaces
 {
     public interface ICurriculumRepository : IRepositoryBase<Curriculum>
     {
+        Task<IEnumerable<Curriculum>> GetAllCurriculumsAsync();
     }
 }

@@ -10,10 +10,10 @@ namespace Infrastructure.Repositories
 {
     public class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {
-        protected readonly DbContext _context;
+        protected readonly ApplicationDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        public RepositoryBase(DbContext context)
+        public RepositoryBase(ApplicationDbContext context)
         {
             _context = context;
             _dbSet = _context.Set<T>();

@@ -16,14 +16,13 @@ namespace Application.Services
     public class CurriculumService : ICurriculumService
     {
         private readonly IWebHostEnvironment _environment;
-        private readonly IRepositoryBase<Curriculum> _curriculumRepository;
+        private readonly ICurriculumRepository _curriculumRepository; 
 
-        // Carpeta de almacenamiento segura fuera de wwwroot
         private const string CvsFolderName = "Curriculums_Storage";
 
         public CurriculumService(
             IWebHostEnvironment environment,
-            IRepositoryBase<Curriculum> curriculumRepository)
+            ICurriculumRepository curriculumRepository)
         {
             _environment = environment;
             _curriculumRepository = curriculumRepository;
@@ -43,7 +42,6 @@ namespace Application.Services
             }
 
             // 2. Definir Ruta Segura (fuera del alcance público)
-            // La ruta base es el directorio del proyecto Presentation
             string rootPath = _environment.ContentRootPath;
             string cvsFolderPath = Path.Combine(rootPath, CvsFolderName);
 
@@ -74,10 +72,57 @@ namespace Application.Services
             };
 
             await _curriculumRepository.AddAsync(curriculum);
-            // Ya que IRepositoryBase hereda de IRepositoryBase<T>, asumimos que AddAsync y SaveChangesAsync están disponibles.
+ 
             await _curriculumRepository.SaveChangesAsync();
 
             return new CurriculumSuccessDto { ApplicationId = curriculum.Id };
+        }
+
+        public async Task<(Stream FileStream, string FileName, string ContentType)> GetCvFileAsync(int curriculumId)
+        {
+            var curriculum = await _curriculumRepository.GetByIdAsync(curriculumId);
+
+            if (curriculum == null)
+            {
+                throw new NotFoundException($"No se encontró la postulación con ID: {curriculumId}");
+            }
+
+            if (!curriculum.IsReviewed)
+            {
+                curriculum.IsReviewed = true;
+                await _curriculumRepository.UpdateAsync(curriculum);
+                await _curriculumRepository.SaveChangesAsync();
+            }
+
+            if (!File.Exists(curriculum.FilePath))
+            {
+                throw new NotFoundException($"El archivo CV asociado a la postulación {curriculumId} no se encontró en el servidor.");
+            }
+
+            var fileStream = new FileStream(curriculum.FilePath, FileMode.Open, FileAccess.Read);
+
+            return (
+                FileStream: fileStream,
+                FileName: curriculum.FileName,
+                ContentType: "application/pdf"
+            );
+        }
+
+        public async Task<IEnumerable<CurriculumListDto>> GetAllCurriculumsAsync()
+        {
+            var curriculums = await _curriculumRepository.GetAllCurriculumsAsync();
+
+            return curriculums.Select(c => new CurriculumListDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Surname = c.Surname,
+                Email = c.Email,
+                Phone = c.Phone,
+                FileName = c.FileName,
+                UploadDate = c.UploadDate,
+                IsReviewed = c.IsReviewed
+            });
         }
     }
 }

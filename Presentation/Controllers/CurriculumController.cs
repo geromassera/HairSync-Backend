@@ -28,10 +28,9 @@ namespace Presentation.Controllers
         [ProducesResponseType(typeof(object), 400)]
         public async Task<IActionResult> PostCv([FromForm] CurriculumDto applicationDto)
         {
-            // El IFormFile y los demás campos se asocian automáticamente gracias a [FromForm]
             var result = await _curriculumService.ProcessCurriculumApplicationAsync(applicationDto);
 
-            return StatusCode(201, result); // Devuelve HTTP 201 Created
+            return StatusCode(201, result); 
         }
     }
 }

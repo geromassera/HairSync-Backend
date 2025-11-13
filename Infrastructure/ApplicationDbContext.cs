@@ -156,6 +156,44 @@ namespace Infrastructure
                 );
             });
 
+
+            modelBuilder.Entity<Curriculum>(entity =>
+            {
+                entity.HasKey(c => c.Id); 
+
+                // Propiedades de la Postulación
+                entity.Property(c => c.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(c => c.Surname)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(c => c.Email)
+                    .IsRequired()
+                    .HasMaxLength(60);
+
+                entity.Property(c => c.Phone)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(c => c.FileName)
+                    .IsRequired()
+                    .HasMaxLength(255); 
+
+                entity.Property(c => c.FilePath)
+                    .IsRequired()
+                    .HasMaxLength(500); 
+
+                entity.Property(c => c.UploadDate)
+                    .IsRequired();
+
+                entity.Property(c => c.IsReviewed)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+            });
+
             modelBuilder.Entity<Review>()
             .HasOne(r => r.User)
             .WithMany(u => u.Reviews)   

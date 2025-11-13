@@ -27,7 +27,6 @@ namespace Application.Models
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El CV es obligatorio.")]
-        // IFormFile se usa para manejar la subida del archivo binario
         public IFormFile CvFile { get; set; } = default!;
     }
 
@@ -35,5 +34,17 @@ namespace Application.Models
     {
         public int ApplicationId { get; set; }
         public string Message { get; set; } = "Postulación enviada exitosamente.";
+    }
+
+    public class CurriculumListDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Surname { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public DateTime UploadDate { get; set; }
+        public bool IsReviewed { get; set; }
     }
 }
