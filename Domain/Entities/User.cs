@@ -30,7 +30,7 @@ namespace Domain.Entities
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(20)]
+        [MaxLength(10)]
         public string Phone { get; set; } = string.Empty;
 
         [Required]
@@ -43,7 +43,7 @@ namespace Domain.Entities
 
         public int? BranchId { get; set; }   
         public Branch? Branch { get; set; }
-        public ICollection<Review> Reviews { get; set; }
+        public ICollection<Review>? Reviews { get; set; }
 
     }
 }
