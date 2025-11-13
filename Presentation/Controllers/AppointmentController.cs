@@ -103,7 +103,7 @@ namespace Presentation.Controllers
 
 
         [HttpGet("availability")]
-        [Authorize(Roles = "Client,Barber")]
+        [Authorize(Roles = "Client,Barber,Admin")]
         public async Task<IActionResult> GetAvailability([FromQuery] int branchId, [FromQuery] DateOnly date, [FromQuery] int? barberId)
         {
             try
@@ -116,6 +116,14 @@ namespace Presentation.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("barbers")]
+        public async Task<IActionResult> GetBarbersByBranch([FromQuery] int branchId)
+        {
+            var barbers = await _appointmentService.GetBarbersByBranchAsync(branchId);
+            return Ok(barbers);
+        }
+
 
     }
 }
