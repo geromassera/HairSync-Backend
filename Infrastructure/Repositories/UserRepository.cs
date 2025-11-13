@@ -1,5 +1,6 @@
-﻿using Domain.Interfaces;
-using Domain.Entities;
+﻿using Domain.Entities;
+using Domain.Enums;
+using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,15 @@ namespace Infrastructure.Repositories
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             return await _dbcontext.Users.ToListAsync();
+        }
+
+        public async Task<List<User>> GetBarbersByBranchAsync(int branchId)
+        {
+            return await _dbcontext.Users
+                .AsNoTracking()
+                .Where(u => u.BranchId == branchId && u.Role == UserRole.Barber)
+                .OrderBy(u => u.Name).ThenBy(u => u.Surname)
+                .ToListAsync();
         }
     }
 }
