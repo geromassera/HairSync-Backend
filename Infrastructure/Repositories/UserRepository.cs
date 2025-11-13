@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain.Enums;
 
 namespace Infrastructure.Repositories
 {
@@ -42,6 +41,8 @@ namespace Infrastructure.Repositories
         {
             return await _dbcontext.Users
                 .FirstOrDefaultAsync(u => u.Phone == phone);
+        }
+            
         public async Task<List<User>> GetBarbersByBranchAsync(int branchId)
         {
             return await _dbcontext.Users
