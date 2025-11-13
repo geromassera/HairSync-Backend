@@ -22,6 +22,7 @@ namespace Infrastructure
         public DbSet<Treatment> Treatments { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Branch> Branches { get; set; } = null!;
+        public DbSet<Curriculum> Curriculums { get; set; } = null!;
 
 
 
