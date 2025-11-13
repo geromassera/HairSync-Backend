@@ -21,6 +21,8 @@ namespace Application.Interfaces
         Task<IEnumerable<AppointmentViewDto>> GetAllAppointmentsHistoryAsync();
 
         Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null);
+
+        Task<List<BarberDto>> GetBarbersByBranchAsync(int branchId);
     }
 }
 
