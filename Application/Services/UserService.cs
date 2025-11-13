@@ -117,6 +117,11 @@ namespace Application.Services
 
             user.Role = newRole;
 
+            if (newRole == UserRole.Client)
+            {
+                user.BranchId = null;
+            }
+
             await _userRepository.SaveChangesAsync();
         }
 
@@ -129,7 +134,8 @@ namespace Application.Services
                 Surname = user.Surname,
                 Email = user.Email,
                 Phone = user.Phone,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                BranchId = user.BranchId
             };
         }
 
