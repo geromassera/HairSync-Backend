@@ -29,14 +29,13 @@ namespace Application.Models
         public string Status { get; set; }
 
         public string ClientName { get; set; }
+        public string ClientPhone { get; set; }
 
         public string BarberName { get; set; }
 
         public string BranchName { get; set; }
         public string TreatmentName { get; set; }
         public decimal Price { get; set; }
-        public decimal TreatmentPrice { get; set; }
-        public string ClientPhone { get; set; }
     }
 }
 
