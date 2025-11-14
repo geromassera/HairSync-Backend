@@ -40,6 +40,11 @@ namespace Application.Services
         {
             DateTime appointmentStartTime = createDto.AppointmentDateTime;
 
+            if (appointmentStartTime.Kind != DateTimeKind.Utc)
+            {
+                // Se asume que el valor de tiempo (ej. 15:00) es el correcto UTC.
+                appointmentStartTime = DateTime.SpecifyKind(appointmentStartTime, DateTimeKind.Utc);
+            }
 
             if (appointmentStartTime.DayOfWeek == DayOfWeek.Sunday)
             {
@@ -155,14 +160,19 @@ namespace Application.Services
         {
             if (appointment == null) return null;
 
+            DateTime utcAppointmentDateTime = DateTime.SpecifyKind(appointment.AppointmentDateTime, DateTimeKind.Utc);
+
             string status;
-            DateTime appointmentEndTime = appointment.AppointmentDateTime.AddMinutes(StandardAppointmentDurationMinutes);
+
+            // Nota: Es mejor que las comparaciones como esta también usen la hora UTC para consistencia
+            // DateTime appointmentEndTime = utcAppointmentDateTime.AddMinutes(StandardAppointmentDurationMinutes);
 
             if (appointment.Status == AppointmentStatus.Cancelled)
             {
                 status = AppointmentStatus.Cancelled.ToString();
             }
-            else if (appointmentEndTime < DateTime.UtcNow)
+            // [ADVERTENCIA: Aquí se usa la hora original sin Kind]
+            else if (appointment.AppointmentDateTime.AddMinutes(StandardAppointmentDurationMinutes) < DateTime.UtcNow)
             {
                 status = "Completed";
             }
@@ -174,7 +184,8 @@ namespace Application.Services
             return new AppointmentViewDto
             {
                 Id = appointment.Id,
-                AppointmentDateTime = appointment.AppointmentDateTime,
+                // Usamos el tiempo con el Kind correcto
+                AppointmentDateTime = utcAppointmentDateTime,
                 Status = status,
 
                 ClientName = $"{appointment.Client?.Name} {appointment.Client?.Surname}".Trim(),
