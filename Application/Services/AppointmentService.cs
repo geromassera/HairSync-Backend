@@ -178,7 +178,6 @@ namespace Application.Services
                 Status = status,
 
                 ClientName = $"{appointment.Client?.Name} {appointment.Client?.Surname}".Trim(),
-                ClientPhone = appointment.Client?.Phone ?? "N/D",
                 BarberName = $"{appointment.Barber?.Name} {appointment.Barber?.Surname}".Trim(),
                 BranchName = appointment.Branch?.Name ?? "N/D",
                 TreatmentName = appointment.Treatment?.Name ?? "N/D",
@@ -187,17 +186,6 @@ namespace Application.Services
         }
 
         public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId)
-        public async Task<AppointmentViewDto> GetAppointmentByIdAsync(int appointmentId)
-        {
-            var appointment = await _appointmentRepo.GetByIdWithDetailsAsync(appointmentId);
-            if (appointment == null)
-            {
-                throw new Exception("Turno no encontrado.");
-            }
-            return MapToViewDto(appointment);
-        }
-
-        public async Task<List<string>> GetAvailableHoursAsync(int branchId, DateOnly date, int? barberId = null)
         {
             if (date.ToDateTime(TimeOnly.MinValue).DayOfWeek == DayOfWeek.Sunday)
                 return new List<string>();
